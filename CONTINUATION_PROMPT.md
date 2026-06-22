@@ -27,7 +27,7 @@ Soy Fede (federicoeckardtd@gmail.com), estudiante que va al IE University Summer
    - URL pública: https://ie-dashboard-production.up.railway.app — endpoints de prueba manual: `/test/morning`, `/test/deepdive`, `/test/preclass`, `/test/weekend`, `/test/contacts`.
    - Verificado end-to-end: Morning/Deepdive/Pre-Class probados en producción con mensajes confirmados recibidos en Telegram. Weekend Recap, Contact Follow-up, Hackathon Assistant y Pitch Practice Bot están deployados pero todavía no se probaron manualmente con datos reales — el programa no ha empezado (arranca 28 jun 2026), así que `notes`/`reflections` están vacías y solo hay un contacto de prueba en Supabase. Correr los endpoints `/test/*` dará los mensajes de fallback ("sin datos") hasta que haya contenido real.
 7. **Las 28 clases del programa están sincronizadas como eventos en el Google Calendar de Fede** (con horarios estimados, ubicación y subject) — ver sección de pendientes abajo sobre por qué hay que recrearlos cuando se confirme el horario real.
-8. **Notion Hub creado** como espejo/backup manual del dashboard (notas, reflexiones, contactos, tabla de los 7 agentes): https://app.notion.com/p/387470a1dd018192b7bdc6fca1cb91f1 — por ahora el sync es manual (pedirle a Claude que lo actualice); para automatizarlo de verdad desde Railway hace falta un `NOTION_API_KEY` (ver sección de pendientes).
+8. **Notion Hub creado** como espejo/backup del dashboard (notas, reflexiones, contactos, tabla de los 7 agentes): https://app.notion.com/p/387470a1dd018192b7bdc6fca1cb91f1 — el sync ya **no es solo manual**: hay una tarea programada de Claude (`ie-notion-weekly-sync`, domingos 7:00 PM hora local) que lee Supabase y actualiza la página automáticamente cada semana. Sigue siendo Claude quien escribe (no el backend de Railway directamente), pero ya no requiere que Fede lo pida cada vez. Para que el backend mismo escriba en Notion sin pasar por Claude haría falta un `NOTION_API_KEY` (ver sección de pendientes) — opcional, no urgente mientras la tarea programada funcione.
 9. Todo pusheado a GitHub (`main`).
 
 ## Único pendiente real
@@ -40,9 +40,9 @@ Soy Fede (federicoeckardtd@gmail.com), estudiante que va al IE University Summer
 
 Búsqueda web hecha (jun 2026): no existe públicamente un horario hora-por-hora del programa, solo la estructura día-por-día (confirmada y ya reflejada en `CLASSES`: semana 1 Segovia = team formation, design thinking, community building, sustainability, critical thinking; semana 2 Madrid = customer discovery/hackathon kick-off, ideación/prototipado, storytelling/pitch VR, hackathon final + pitch, admisiones + graduación). El horario real hora a hora lo da IE al llegar, como ya sabía Fede.
 
-### Notion Sync — automatización pendiente
+### Notion Sync — automatización pendiente (opcional)
 
-El Hub de Notion (link arriba) se creó y llenó manualmente como punto de partida. Para que el backend escriba ahí solo (en vez de hacerlo vía asistente):
+El Hub de Notion (link arriba) ya se actualiza solo cada semana vía una tarea programada de Claude (`ie-notion-weekly-sync`, domingos 7:00 PM). Si en algún momento se quiere que el backend de Railway escriba ahí directamente (sin pasar por Claude):
 
 1. Crear una integración de Notion y conseguir su token.
 2. Compartir la página del Hub con esa integración.
@@ -65,7 +65,7 @@ Las 5 variables (`DEEPSEEK_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `TELEG
 ## Bugs / inconsistencias conocidas (no bloqueantes)
 
 1. Las fechas de Semana 1 / Semana 2 están unificadas entre `Dashboard.jsx`, `Reflexiones.jsx`, `Schedule.jsx` y `backend/src/data/schedule.js` (Semana 1: domingo 28 jun → sábado 4 jul; Semana 2: domingo 5 jul → sábado 11 jul). Si Fede pide cambiar fechas, actualizar los 4 archivos a la vez.
-2. `src/lib/agents.js` (frontend) duplica la lógica de prompts de DeepSeek que ahora vive server-side en `backend/src/lib/deepseek.js`. Se usa solo para un botón de prueba manual en `/agentes` — no es un bug, pero si se reescriben los prompts hay que actualizar ambos lados.
+2. `src/lib/agents.js` (frontend) duplica la lógica de prompts de DeepSeek que ahora vive server-side en `backend/src/lib/deepseek.js` (incluye `hackathonPrep`, `pitchPrep`, `contactFollowup` además de los 3 agentes originales). Se usa solo para los botones de prueba manual en `/agentes` (ahora los 4 agentes con datos de ejemplo simples tienen botón "Probar ahora": Morning, Hackathon, Pitch, Contacts — Pre-Class Prep, Night Deepdive y Weekend Recap no, porque necesitan contexto real de Supabase que no tiene sentido simular en el cliente) — no es un bug, pero si se reescriben los prompts hay que actualizar ambos lados.
 
 ## Archivos clave para orientarse rápido
 

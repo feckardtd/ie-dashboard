@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sunrise, BookOpen, Moon, Zap, CalendarDays, Rocket, Mic2, Users } from 'lucide-react';
-import { morningIntelligence } from '../lib/agents';
+import { morningIntelligence, hackathonPrep, pitchPrep, contactFollowup } from '../lib/agents';
 
 const AGENTS = [
   {
@@ -82,21 +82,56 @@ const AGENTS = [
   },
 ];
 
+// Test data + label per agent that supports a local "Probar ahora" run.
+// Each one mirrors what the backend cron job would actually send.
+const TESTABLE_AGENTS = {
+  morning: {
+    label: '🌅 Resultado Morning Intelligence (prueba)',
+    run: () =>
+      morningIntelligence(
+        [{ clase: 'Icebreaker', notas: 'Conocí al equipo, trabajamos en dinámica de Two Truths and a Lie' }],
+        [{ name: 'Sustainability Introduction & SDGs' }, { name: 'Social Impact' }]
+      ),
+  },
+  hackathon: {
+    label: '⚡ Resultado Hackathon Assistant (prueba)',
+    run: () =>
+      hackathonPrep('Define a Good Problem', [
+        { clase: 'Customer Discovery Field Trip', notas: 'Hablamos con 5 personas sobre el problema, todavía sin hipótesis clara' },
+      ]),
+  },
+  pitch: {
+    label: '🎤 Resultado Pitch Practice Bot (prueba)',
+    run: () =>
+      pitchPrep('VR Pitch Practice', [
+        { clase: 'Storytelling Workshop', notas: 'Practiqué el hook de apertura pero se siente genérico todavía' },
+      ]),
+  },
+  contacts: {
+    label: '🤝 Resultado Contact Follow-up (prueba)',
+    run: () =>
+      contactFollowup([
+        { nombre: 'Maria Lopez', pais: 'México', notas: 'Le interesa sostenibilidad y quiere armar equipo de hackathon' },
+      ]),
+  },
+};
+
 export default function Agentes() {
   const [testing, setTesting] = useState(null);
   const [testResult, setTestResult] = useState('');
 
-  const testMorning = async () => {
-    setTesting('morning');
+  const [testedAgent, setTestedAgent] = useState(null);
+
+  const runTest = async (agentId) => {
+    setTesting(agentId);
     setTestResult('');
     try {
-      const result = await morningIntelligence(
-        [{ clase: 'Icebreaker', notas: 'Conocí al equipo, trabajamos en dinámica de Two Truths and a Lie' }],
-        [{ name: 'Sustainability Introduction & SDGs' }, { name: 'Social Impact' }]
-      );
+      const result = await TESTABLE_AGENTS[agentId].run();
       setTestResult(result);
+      setTestedAgent(agentId);
     } catch (e) {
       setTestResult('Error al conectar. Verifica tu REACT_APP_DEEPSEEK_API_KEY en el .env.local');
+      setTestedAgent(agentId);
     }
     setTesting(null);
   };
@@ -160,13 +195,13 @@ export default function Agentes() {
                     <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Telegram habilitado</span>
                   </div>
                 )}
-                {agent.id === 'morning' && (
+                {TESTABLE_AGENTS[agent.id] && (
                   <button
                     style={{ ...styles.testBtn, borderColor: agent.color + '44', color: agent.color }}
-                    onClick={testMorning}
-                    disabled={testing === 'morning'}
+                    onClick={() => runTest(agent.id)}
+                    disabled={testing === agent.id}
                   >
-                    {testing === 'morning' ? 'Probando...' : 'Probar ahora'}
+                    {testing === agent.id ? 'Probando...' : 'Probar ahora'}
                   </button>
                 )}
               </div>
@@ -178,7 +213,7 @@ export default function Agentes() {
       {/* Test Result */}
       {testResult && (
         <div style={styles.testResult}>
-          <p style={styles.testResultLabel}>🌅 Resultado Morning Intelligence (prueba)</p>
+          <p style={styles.testResultLabel}>{TESTABLE_AGENTS[testedAgent]?.label}</p>
           <div style={styles.testResultText}>
             {testResult.split('\n').map((line, i) => (
               <p key={i} style={{ marginBottom: line ? 6 : 0 }}>{line}</p>

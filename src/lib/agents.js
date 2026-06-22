@@ -42,3 +42,25 @@ export async function nightDeepdive(todayNotes, className, subjectName) {
   const user = `Las notas de hoy de "${className}" (${subjectName}): "${todayNotes}". Dame: 1) Los 3 conceptos más importantes expandidos. 2) Conexiones con el mundo real o empresas reales. 3) 3 preguntas difíciles para testear su comprensión. 4) Un insight que el 90% de sus compañeros NO va a saber.`;
   return callDeepSeek(system, user);
 }
+
+// AGENT 5: Hackathon Assistant (mirrors backend/src/lib/deepseek.js hackathonPrep,
+// so the "Probar ahora" button in Agentes.jsx matches what Telegram sends)
+export async function hackathonPrep(className, previousNotes) {
+  const system = `Eres el agente de Hackathon Assistant de Fede en el Pre-University Summer Program de IE University. Tu trabajo es prepararlo en modo "builder" antes de cada sesión de hackathon, para que llegue con ventaja frente al resto de los equipos. Sé táctico y concreto, como un mentor de startups. Máximo 180 palabras. Responde en español.`;
+  const user = `Va a entrar a la sesión de hackathon "${className}". Notas previas relacionadas: ${JSON.stringify(previousNotes)}. Dame: 1) Qué debería tener listo o decidido ANTES de entrar (problema, hipótesis, datos). 2) Una técnica concreta de customer discovery o framing de problema que pueda usar hoy. 3) Una pregunta incómoda que debería hacerse a sí mismo o a su equipo para no enamorarse de la primera idea.`;
+  return callDeepSeek(system, user);
+}
+
+// AGENT 6: Pitch Practice Bot (mirrors backend/src/lib/deepseek.js pitchPrep)
+export async function pitchPrep(className, previousNotes) {
+  const system = `Eres el Pitch Practice Bot de Fede en el Pre-University Summer Program de IE University. Tu trabajo es ponerlo en modo competencia antes de cada sesión de pitch, simulando lo que un jurado exigente le preguntaría. Sé directo y exigente pero motivador. Máximo 180 palabras. Responde en español.`;
+  const user = `Va a entrar a la sesión "${className}". Notas previas de pitch/storytelling: ${JSON.stringify(previousNotes)}. Dame: 1) Las 3 preguntas más duras que un jurado de inversión le haría hoy sobre su idea o pitch. 2) Un error común de storytelling que debe evitar en esta sesión específica. 3) Una frase de apertura (hook) que podría probar para captar atención en los primeros 10 segundos.`;
+  return callDeepSeek(system, user);
+}
+
+// AGENT 7: Contact Follow-up (mirrors backend/src/lib/deepseek.js contactFollowup)
+export async function contactFollowup(contacts) {
+  const system = `Eres el agente de seguimiento de contactos de Fede en el Pre-University Summer Program de IE University. Tu trabajo es ayudarlo a no perder las conexiones que está haciendo con gente de todo el mundo. Sé cálido pero práctico. Máximo 220 palabras. Responde en español.`;
+  const user = `Hoy Fede agregó estos contactos nuevos: ${JSON.stringify(contacts)}. Para cada contacto, dame un mensaje corto y específico (1-2 frases, en inglés si el contacto parece no hispanohablante) que podría mandarle por LinkedIn/Instagram/email para mantener el contacto, mencionando algo concreto de lo que compartieron si la info lo permite. Si no hay suficiente info, sugiere una pregunta genuina para conocerlo mejor.`;
+  return callDeepSeek(system, user);
+}

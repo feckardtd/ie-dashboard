@@ -29,7 +29,7 @@ El código de los jobs vive en `backend/src/jobs/` (Hackathon Assistant y Pitch 
 
 ## Notion
 
-Hub de respaldo manual con notas, reflexiones, contactos y la tabla de agentes: https://app.notion.com/p/387470a1dd018192b7bdc6fca1cb91f1 — el sync hoy es manual; automatizarlo desde Railway requiere un `NOTION_API_KEY` (no configurado todavía).
+Hub de respaldo con notas, reflexiones, contactos y la tabla de agentes: https://app.notion.com/p/387470a1dd018192b7bdc6fca1cb91f1 — se actualiza solo cada domingo a las 7:00 PM vía una tarea programada de Claude (lee Supabase, escribe en Notion). Automatizarlo directamente desde Railway (sin pasar por Claude) requiere un `NOTION_API_KEY` (no configurado, opcional).
 
 ## Calendario
 
