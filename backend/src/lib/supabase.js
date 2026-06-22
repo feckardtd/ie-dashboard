@@ -1,9 +1,16 @@
 const { createClient } = require('@supabase/supabase-js');
+const ws = require('ws');
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+// This bot only does plain REST queries (select/insert), never realtime
+// subscriptions, but supabase-js still initializes a RealtimeClient under
+// the hood and that requires a WebSocket implementation on Node < 22.
+// Provide the "ws" package as the transport per Supabase's own docs.
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  realtime: { transport: ws },
+});
 
 // Get the note for a single class (mirrors frontend src/lib/supabase.js getNote)
 async function getNote(classId) {
