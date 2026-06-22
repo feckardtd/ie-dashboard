@@ -62,6 +62,18 @@ async function markClassNotified(classId) {
   if (error) console.error('[supabase] error guardando preclass_notification:', error.message);
 }
 
+// All reflections saved in [startISO, endISO) — used by Weekend Recap to
+// pull the week's daily reflections (mirrors getNotesUpdatedBetween).
+async function getReflectionsBetween(startISO, endISO) {
+  const { data, error } = await supabase
+    .from('reflections')
+    .select('*')
+    .gte('updated_at', startISO)
+    .lt('updated_at', endISO)
+    .order('date', { ascending: true });
+  return { data: data || [], error };
+}
+
 module.exports = {
   supabase,
   getNote,
@@ -69,4 +81,5 @@ module.exports = {
   getNotesUpdatedBetween,
   getNotifiedClassIds,
   markClassNotified,
+  getReflectionsBetween,
 };

@@ -6,6 +6,7 @@ const { TIMEZONE } = require('./data/schedule');
 const { runMorningIntelligence } = require('./jobs/morningIntelligence');
 const { runNightDeepdive } = require('./jobs/nightDeepdive');
 const { checkUpcomingClasses } = require('./jobs/preClassPrep');
+const { runWeekendRecap } = require('./jobs/weekendRecap');
 
 const REQUIRED_ENV = [
   'DEEPSEEK_API_KEY',
@@ -59,6 +60,16 @@ app.get('/test/preclass', async (req, res) => {
   }
 });
 
+app.get('/test/weekend', async (req, res) => {
+  try {
+    await runWeekendRecap();
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`ie-dashboard-bot escuchando en puerto ${PORT} (zona horaria ${TIMEZONE})`);
 });
@@ -90,4 +101,13 @@ cron.schedule(
   { timezone: TIMEZONE }
 );
 
-console.log('Cron jobs programados: Morning Intelligence (7:00), Night Deepdive (21:00), Pre-Class Prep (cada 5 min).');
+// Weekend Recap — todos los domingos 6:00 PM hora de España
+cron.schedule(
+  '0 18 * * 0',
+  () => {
+    runWeekendRecap().catch((e) => console.error('[weekend] error:', e.message));
+  },
+  { timezone: TIMEZONE }
+);
+
+console.log('Cron jobs programados: Morning Intelligence (7:00), Night Deepdive (21:00), Pre-Class Prep (cada 5 min), Weekend Recap (domingo 18:00).');

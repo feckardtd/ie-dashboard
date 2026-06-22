@@ -1,0 +1,44 @@
+const { DateTime } = require('luxon');
+const { getNotesUpdatedBetween, getReflectionsBetween } = require('../lib/supabase');
+const { weekendRecap: generateRecap } = require('../lib/deepseek');
+const { sendTelegramMessage } = require('../lib/telegram');
+const { CLASSES, TIMEZONE } = require('../data/schedule');
+
+// Runs Sunday evening. Looks back 7 days (the program week that just
+// ended) and summarizes notes + daily reflections into one recap with a
+// plan of attack for the coming week.
+async function runWeekendRecap() {
+  const now = DateTime.now().setZone(TIMEZONE);
+  const weekStart = now.minus({ days: 7 }).startOf('day');
+  const weekEnd = now.startOf('day').plus({ days: 1 });
+
+  const [{ data: notes, error: notesError }, { data: reflections, error: reflError }] =
+    await Promise.all([
+      getNotesUpdatedBetween(weekStart.toUTC().toISO(), weekEnd.toUTC().toISO()),
+      getReflectionsBetween(weekStart.toUTC().toISO(), weekEnd.toUTC().toISO()),
+    ]);
+  if (notesError) console.error('[weekend] error leyendo notas:', notesError.message);
+  if (reflError) console.error('[weekend] error leyendo reflexiones:', reflError.message);
+
+  const weekNotes = (notes || [])
+    .filter((n) => n.content)
+    .map((n) => ({ clase: CLASSES.find((c) => c.id === n.class_id)?.name || n.class_id, notas: n.content }));
+  const weekReflections = (reflections || [])
+    .filter((r) => r.content)
+    .map((r) => ({ fecha: r.date, reflexion: r.content }));
+  const classNames = [...new Set(weekNotes.map((n) => n.clase))];
+
+  if (weekNotes.length === 0 && weekReflections.length === 0) {
+    await sendTelegramMessage(
+      '🗂️ <b>Weekend Recap</b>\n\nNo encontré notas ni reflexiones de esta semana. Aprovecha el domingo para descansar — la próxima semana empezamos de cero 💪'
+    );
+    console.log('[weekend] sin datos esta semana, mensaje informativo enviado');
+    return;
+  }
+
+  const message = await generateRecap(weekNotes, weekReflections, classNames);
+  await sendTelegramMessage(`🗂️ <b>Weekend Recap</b>\n\n${message}`);
+  console.log('[weekend] enviado a Telegram');
+}
+
+module.exports = { runWeekendRecap };

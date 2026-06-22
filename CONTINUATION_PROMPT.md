@@ -20,12 +20,13 @@ Soy Fede (federicoeckardtd@gmail.com), estudiante que va al IE University Summer
 4. Página `/schedule`: calendario visual semanal (`src/pages/Schedule.jsx`), tabs Semana 1 (Segovia) / Semana 2 (Madrid), leyenda de colores por subject.
 5. Navbar con link a Schedule.
 6. **Backend de Telegram + DeepSeek + Supabase deployado en Railway** (`backend/`):
-   - Express + node-cron, 3 jobs: Morning Intelligence (7:00 AM), Night Deepdive (9:00 PM), Pre-Class Prep (checa cada 5 min si hay clase en ~30 min).
+   - Express + node-cron, 4 jobs: Morning Intelligence (7:00 AM), Night Deepdive (9:00 PM), Pre-Class Prep (checa cada 5 min si hay clase en ~30 min), Weekend Recap (domingos 6:00 PM).
    - Generación de texto vía DeepSeek API, contexto desde Supabase, envío vía Telegram Bot API.
    - Dedup de Pre-Class Prep persistido en Supabase (tabla `preclass_notifications`) — sobrevive reinicios de Railway.
-   - URL pública: https://ie-dashboard-production.up.railway.app — endpoints de prueba manual: `/test/morning`, `/test/deepdive`, `/test/preclass`.
-   - Verificado end-to-end: los 3 jobs probados en producción, mensajes confirmados recibidos en Telegram.
-7. Todo pusheado a GitHub (`main`).
+   - URL pública: https://ie-dashboard-production.up.railway.app — endpoints de prueba manual: `/test/morning`, `/test/deepdive`, `/test/preclass`, `/test/weekend`.
+   - Verificado end-to-end: Morning/Deepdive/Pre-Class probados en producción con mensajes confirmados recibidos en Telegram. Weekend Recap está deployado pero todavía no se probó manualmente — correr `/test/weekend` para verificar (puede dar el mensaje "sin datos esta semana" si todavía no hay notas/reflexiones guardadas).
+7. **Las 28 clases del programa están sincronizadas como eventos en el Google Calendar de Fede** (con horarios estimados, ubicación y subject) — ver sección de pendientes abajo sobre por qué hay que recrearlos cuando se confirme el horario real.
+8. Todo pusheado a GitHub (`main`).
 
 ## Único pendiente real
 
@@ -33,7 +34,7 @@ Soy Fede (federicoeckardtd@gmail.com), estudiante que va al IE University Summer
 
 `backend/src/data/schedule.js` y `src/data/schedule.js` tienen `CLASSES` con `day`, `week`, `session` (número), pero el mapa `SESSION_START_TIMES` usa horarios **estimados** (bloques estándar desde las 9:00) porque el horario real del programa no se había confirmado. Esto afecta directamente la precisión de Pre-Class Prep (dispara "30 min antes" del horario estimado, no el real).
 
-**Acción**: en cuanto Fede confirme el horario real, actualizar `SESSION_START_TIMES` en AMBOS archivos (frontend y backend deben quedar sincronizados) — o, mejor, agregar un campo `startTime` directo a cada clase en `CLASSES` si los horarios no son uniformes por número de sesión.
+**Acción**: en cuanto Fede confirme el horario real, actualizar `SESSION_START_TIMES` en AMBOS archivos (frontend y backend deben quedar sincronizados) — o, mejor, agregar un campo `startTime` directo a cada clase en `CLASSES` si los horarios no son uniformes por número de sesión. También hay que borrar y recrear los 28 eventos del Google Calendar de Fede (creados con estos horarios estimados) una vez se sepa la hora real — no hay sincronización automática entre `schedule.js` y el calendario, así que un cambio en el código no actualiza los eventos ya creados.
 
 ## Notas de arquitectura (decisiones ya tomadas — no reabrir sin razón de peso)
 

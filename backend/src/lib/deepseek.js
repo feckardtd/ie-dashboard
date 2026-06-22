@@ -51,4 +51,10 @@ async function nightDeepdive(todayNotes, className, subjectName) {
   return callDeepSeek(system, user, 900);
 }
 
-module.exports = { callDeepSeek, morningIntelligence, preClassPrep, nightDeepdive };
+async function weekendRecap(weekNotes, weekReflections, classNames) {
+  const system = `Eres el agente de recap semanal de Fede en el Pre-University Summer Program de IE University. Tu trabajo es ayudarlo a ver el panorama completo de la semana que pasó y armar un plan de ataque para la próxima. Sé motivador pero concreto. Máximo 250 palabras. Responde en español.`;
+  const user = `Clases de esta semana: ${classNames.join(', ') || 'ninguna'}. Notas guardadas: ${JSON.stringify(weekNotes)}. Reflexiones diarias: ${JSON.stringify(weekReflections)}. Dame: 1) El hilo conductor de la semana (qué conecta todas las clases). 2) Su mayor progreso o momento de orgullo. 3) Una cosa concreta para mejorar la próxima semana. 4) Una pregunta para que reflexione el domingo.`;
+  return callDeepSeek(system, user, 700);
+}
+
+module.exports = { callDeepSeek, morningIntelligence, preClassPrep, nightDeepdive, weekendRecap };

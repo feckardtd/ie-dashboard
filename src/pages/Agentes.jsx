@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sunrise, BookOpen, Moon, Zap } from 'lucide-react';
+import { Sunrise, BookOpen, Moon, Zap, CalendarDays } from 'lucide-react';
 import { morningIntelligence } from '../lib/agents';
 
 const AGENTS = [
@@ -36,6 +36,17 @@ const AGENTS = [
     telegram: true,
     active: true,
   },
+  {
+    id: 'weekend',
+    name: 'Weekend Recap',
+    emoji: '🗂️',
+    icon: CalendarDays,
+    color: '#ec4899',
+    time: 'Domingos 6:00 PM',
+    description: 'Junta las notas y reflexiones de toda la semana, identifica tu mayor progreso y te da un plan de ataque para la próxima.',
+    telegram: true,
+    active: true,
+  },
 ];
 
 export default function Agentes() {
@@ -60,7 +71,7 @@ export default function Agentes() {
   return (
     <div style={styles.page}>
       <h1 style={styles.title}>Agentes <span style={{ color: 'var(--accent)' }}>IA</span></h1>
-      <p style={styles.sub}>3 agentes activos · conectados a DeepSeek · disponibles en Telegram</p>
+      <p style={styles.sub}>4 agentes activos · conectados a DeepSeek · disponibles en Telegram</p>
 
       {/* How it works */}
       <div style={styles.flowCard}>
@@ -83,6 +94,7 @@ export default function Agentes() {
             </React.Fragment>
           ))}
         </div>
+        <p style={{ ...styles.flowTitle, marginTop: 20, marginBottom: 0 }}>+ CADA DOMINGO 6:00 PM — 🗂️ WEEKEND RECAP</p>
       </div>
 
       {/* Agent Cards */}
@@ -178,7 +190,7 @@ const styles = {
   flowStepLabel: { fontSize: 12, fontWeight: 600, textAlign: 'center' },
   flowStepTime: { fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--mono)', textAlign: 'center' },
   flowArrow: { color: 'var(--text-dim)', fontSize: 18 },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 32 },
   card: {
     background: 'var(--bg-card)', border: '1px solid',
     borderRadius: 12, padding: '24px', display: 'flex', flexDirection: 'column', gap: 10,

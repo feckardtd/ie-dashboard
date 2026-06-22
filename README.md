@@ -20,8 +20,13 @@ Dashboard personal para el IE University Summer School 2026 (Segovia → Madrid,
 | 🌅 Morning Intelligence | 7:00 AM hora España, todos los días | Resume las notas de ayer + conecta con las clases de hoy |
 | 📚 Pre-Class Prep | 30 min antes de cada clase | Busca notas pasadas del subject y prepara contexto |
 | 🌙 Night Deepdive | 9:00 PM hora España, todos los días | Profundiza 3x en las notas del día |
+| 🗂️ Weekend Recap | Domingos 6:00 PM hora España | Junta notas + reflexiones de la semana y da un plan para la próxima |
 
-El código de los 3 jobs vive en `backend/src/jobs/`.
+El código de los 4 jobs vive en `backend/src/jobs/`.
+
+## Calendario
+
+Las 28 clases del programa (horarios estimados) están sincronizadas como eventos en el Google Calendar de Fede (`federicoeckardtd@gmail.com`), con ubicación (Segovia/Madrid) y subject en la descripción. Cuando se confirme el horario real, hay que borrar y recrear estos eventos con la hora correcta — no se actualizan automáticamente.
 
 ## Estructura
 
