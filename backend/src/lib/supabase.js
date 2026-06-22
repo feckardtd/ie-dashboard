@@ -44,4 +44,29 @@ async function getNotesUpdatedBetween(startISO, endISO) {
   return { data: data || [], error };
 }
 
-module.exports = { supabase, getNote, getNotesForClasses, getNotesUpdatedBetween };
+// Pre-Class Prep dedup — persisted in Supabase instead of an in-memory Set
+// so a Railway restart mid-window doesn't cause a duplicate notification.
+async function getNotifiedClassIds() {
+  const { data, error } = await supabase.from('preclass_notifications').select('class_id');
+  if (error) {
+    console.error('[supabase] error leyendo preclass_notifications:', error.message);
+    return new Set();
+  }
+  return new Set((data || []).map((r) => r.class_id));
+}
+
+async function markClassNotified(classId) {
+  const { error } = await supabase
+    .from('preclass_notifications')
+    .upsert({ class_id: classId, notified_at: new Date().toISOString() });
+  if (error) console.error('[supabase] error guardando preclass_notification:', error.message);
+}
+
+module.exports = {
+  supabase,
+  getNote,
+  getNotesForClasses,
+  getNotesUpdatedBetween,
+  getNotifiedClassIds,
+  markClassNotified,
+};

@@ -142,13 +142,13 @@ export default function Agentes() {
 
       {/* Setup Section */}
       <div style={styles.setupCard}>
-        <h3 style={styles.setupTitle}>⚙️ Configuración pendiente</h3>
+        <h3 style={styles.setupTitle}>⚙️ Configuración</h3>
         <div style={styles.setupList}>
           {[
-            { label: 'DeepSeek API Key', desc: 'En tu .env.local como REACT_APP_DEEPSEEK_API_KEY', done: false },
-            { label: 'Supabase URL + Key', desc: 'Para guardar notas y compartir con agentes', done: false },
-            { label: 'Telegram Bot Token', desc: 'Para recibir mensajes automáticos en tu cel', done: false },
-            { label: 'OpenClaw en Railway', desc: 'Para que los agentes corran 24/7 en la nube (Día 2)', done: false },
+            { label: 'DeepSeek API Key', desc: 'Configurada en el backend de Railway', done: true },
+            { label: 'Supabase URL + Key', desc: 'Conectado para guardar notas y compartirlas con los agentes', done: true },
+            { label: 'Telegram Bot Token', desc: 'Conectado — recibes mensajes automáticos en tu cel', done: true },
+            { label: 'Backend en Railway', desc: 'Los 3 agentes corren 24/7 en la nube con cron jobs', done: true },
           ].map(({ label, desc, done }) => (
             <div key={label} style={styles.setupItem}>
               <span style={{ fontSize: 16 }}>{done ? '✅' : '⏳'}</span>

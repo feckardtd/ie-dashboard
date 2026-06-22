@@ -1,19 +1,20 @@
 const { DateTime } = require('luxon');
-const { getNotesForClasses } = require('../lib/supabase');
+const { getNotesForClasses, getNotifiedClassIds, markClassNotified } = require('../lib/supabase');
 const { preClassPrep: generatePrep } = require('../lib/deepseek');
 const { sendTelegramMessage } = require('../lib/telegram');
 const { CLASSES, getSubject, getClassStart, TIMEZONE } = require('../data/schedule');
 
-// In-memory dedup so the same class doesn't get notified twice across
-// cron ticks. Resets if the process restarts — acceptable for a personal
-// bot, but if Railway restarts mid-window a class could be notified twice.
-const notified = new Set();
-
+// Dedup so the same class doesn't get notified twice across cron ticks.
+// Persisted in Supabase (table `preclass_notifications`) instead of an
+// in-memory Set so a Railway restart mid-window doesn't cause a duplicate
+// notification — each class_id is unique across the whole program, so it
+// only ever needs to fire once.
 const MINUTES_BEFORE = 30;
 const WINDOW_MINUTES = 5; // tolerance: fires once per checker tick (every 5 min)
 
 async function checkUpcomingClasses() {
   const now = DateTime.now().setZone(TIMEZONE);
+  const notified = await getNotifiedClassIds();
 
   for (const cls of CLASSES) {
     if (notified.has(cls.id)) continue;
@@ -25,7 +26,7 @@ async function checkUpcomingClasses() {
       minutesUntil <= MINUTES_BEFORE && minutesUntil > MINUTES_BEFORE - WINDOW_MINUTES;
 
     if (inWindow) {
-      notified.add(cls.id);
+      await markClassNotified(cls.id);
       await sendPreClassPrep(cls).catch((err) =>
         console.error(`[preclass] error enviando prep para ${cls.id}:`, err.message)
       );
