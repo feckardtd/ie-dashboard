@@ -1,9 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Users, Bot, BookMarked, User } from 'lucide-react';
+import { LayoutDashboard, Calendar, BookOpen, Users, Bot, BookMarked, User } from 'lucide-react';
 
 const NAV = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/schedule', icon: Calendar, label: 'Schedule' },
   { to: '/clases', icon: BookOpen, label: 'Clases' },
   { to: '/contactos', icon: Users, label: 'Contactos' },
   { to: '/agentes', icon: Bot, label: 'Agentes' },
