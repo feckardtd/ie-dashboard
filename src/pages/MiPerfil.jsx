@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Target, Globe, Users, Heart, BookOpen, Edit3, Save } from 'lucide-react';
+import { Target, Globe, Users, Heart, BookOpen, Edit3, Save } from 'lucide-react';
 
 const OBJECTIVES = [
   { id: 'academic', icon: BookOpen, label: 'Académico', color: '#6c63ff', goal: 'Contribuir activamente al Hackathon y competencia de pitch. Hacer al menos 1 pregunta inteligente por clase.' },

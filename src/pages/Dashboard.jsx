@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Users, Bot, BookMarked, MapPin, Calendar, Zap } from 'lucide-react';
 import { SUBJECTS, CLASSES } from '../data/schedule';
@@ -27,7 +27,7 @@ function getDaysUntilProgram() {
 }
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({ notes: 0, contacts: 0 });
+  const [stats] = useState({ notes: 0, contacts: 0 });
   const week = getCurrentWeek();
   const location = getCurrentLocation();
   const daysUntil = getDaysUntilProgram();

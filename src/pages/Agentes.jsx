@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, Sunrise, BookOpen, Moon, ExternalLink, Zap } from 'lucide-react';
+import { Sunrise, BookOpen, Moon, Zap } from 'lucide-react';
 import { morningIntelligence } from '../lib/agents';
 
 const AGENTS = [
@@ -88,7 +88,6 @@ export default function Agentes() {
       {/* Agent Cards */}
       <div style={styles.grid}>
         {AGENTS.map(agent => {
-          const Icon = agent.icon;
           return (
             <div key={agent.id} style={{ ...styles.card, borderColor: agent.color + '44' }}>
               <div style={styles.cardTop}>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, BookMarked } from 'lucide-react';
+import { BookMarked } from 'lucide-react';
 import { saveReflection, getReflections } from '../lib/supabase';
 
 const today = () => new Date().toISOString().split('T')[0];
