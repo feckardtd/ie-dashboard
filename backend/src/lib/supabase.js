@@ -74,6 +74,19 @@ async function getReflectionsBetween(startISO, endISO) {
   return { data: data || [], error };
 }
 
+// Contacts created in [startISO, endISO) — used by the Contact Follow-up
+// Agent to find new people Fede met since the last run, so it can suggest
+// a concrete follow-up message before they slip out of mind.
+async function getContactsCreatedBetween(startISO, endISO) {
+  const { data, error } = await supabase
+    .from('contacts')
+    .select('*')
+    .gte('created_at', startISO)
+    .lt('created_at', endISO)
+    .order('created_at', { ascending: true });
+  return { data: data || [], error };
+}
+
 module.exports = {
   supabase,
   getNote,
@@ -82,4 +95,5 @@ module.exports = {
   getNotifiedClassIds,
   markClassNotified,
   getReflectionsBetween,
+  getContactsCreatedBetween,
 };

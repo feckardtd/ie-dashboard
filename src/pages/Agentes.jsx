@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sunrise, BookOpen, Moon, Zap, CalendarDays } from 'lucide-react';
+import { Sunrise, BookOpen, Moon, Zap, CalendarDays, Rocket, Mic2, Users } from 'lucide-react';
 import { morningIntelligence } from '../lib/agents';
 
 const AGENTS = [
@@ -47,6 +47,39 @@ const AGENTS = [
     telegram: true,
     active: true,
   },
+  {
+    id: 'hackathon',
+    name: 'Hackathon Assistant',
+    emoji: '⚡',
+    icon: Rocket,
+    color: '#f97316',
+    time: '30 min antes de clases de hackathon',
+    description: 'Reemplaza a Pre-Class Prep en las sesiones de hackathon (Define a Good Problem, Customer Discovery, Hackathon Framework). Te pone en modo builder con técnicas tácticas antes de cada sesión.',
+    telegram: true,
+    active: true,
+  },
+  {
+    id: 'pitch',
+    name: 'Pitch Practice Bot',
+    emoji: '🎤',
+    icon: Mic2,
+    color: '#ef4444',
+    time: '30 min antes de clases de pitch',
+    description: 'Reemplaza a Pre-Class Prep en las sesiones de pitch (VR practice, competencias, elevator pitch). Simula preguntas duras de jurado y te da feedback de storytelling.',
+    telegram: true,
+    active: true,
+  },
+  {
+    id: 'contacts',
+    name: 'Contact Follow-up',
+    emoji: '🤝',
+    icon: Users,
+    color: '#06b6d4',
+    time: 'Todos los días 10:30 PM',
+    description: 'Revisa los contactos que agregaste ese día y te sugiere un mensaje concreto de seguimiento por LinkedIn, Instagram o email para no perder la conexión.',
+    telegram: true,
+    active: true,
+  },
 ];
 
 export default function Agentes() {
@@ -71,7 +104,7 @@ export default function Agentes() {
   return (
     <div style={styles.page}>
       <h1 style={styles.title}>Agentes <span style={{ color: 'var(--accent)' }}>IA</span></h1>
-      <p style={styles.sub}>4 agentes activos · conectados a DeepSeek · disponibles en Telegram</p>
+      <p style={styles.sub}>7 agentes activos · conectados a DeepSeek · disponibles en Telegram</p>
 
       {/* How it works */}
       <div style={styles.flowCard}>
@@ -95,6 +128,8 @@ export default function Agentes() {
           ))}
         </div>
         <p style={{ ...styles.flowTitle, marginTop: 20, marginBottom: 0 }}>+ CADA DOMINGO 6:00 PM — 🗂️ WEEKEND RECAP</p>
+        <p style={{ ...styles.flowTitle, marginTop: 8, marginBottom: 0 }}>+ EN CLASES DE HACKATHON/PITCH — ⚡ HACKATHON ASSISTANT / 🎤 PITCH PRACTICE BOT TOMAN EL LUGAR DE PRE-CLASS PREP</p>
+        <p style={{ ...styles.flowTitle, marginTop: 8, marginBottom: 0 }}>+ TODOS LOS DÍAS 10:30 PM — 🤝 CONTACT FOLLOW-UP</p>
       </div>
 
       {/* Agent Cards */}
@@ -160,7 +195,7 @@ export default function Agentes() {
             { label: 'DeepSeek API Key', desc: 'Configurada en el backend de Railway', done: true },
             { label: 'Supabase URL + Key', desc: 'Conectado para guardar notas y compartirlas con los agentes', done: true },
             { label: 'Telegram Bot Token', desc: 'Conectado — recibes mensajes automáticos en tu cel', done: true },
-            { label: 'Backend en Railway', desc: 'Los 3 agentes corren 24/7 en la nube con cron jobs', done: true },
+            { label: 'Backend en Railway', desc: 'Los 7 agentes corren 24/7 en la nube con cron jobs', done: true },
           ].map(({ label, desc, done }) => (
             <div key={label} style={styles.setupItem}>
               <span style={{ fontSize: 16 }}>{done ? '✅' : '⏳'}</span>

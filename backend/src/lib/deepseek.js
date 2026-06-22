@@ -57,4 +57,41 @@ async function weekendRecap(weekNotes, weekReflections, classNames) {
   return callDeepSeek(system, user, 700);
 }
 
-module.exports = { callDeepSeek, morningIntelligence, preClassPrep, nightDeepdive, weekendRecap };
+// Hackathon Assistant — fires instead of the generic Pre-Class Prep for
+// classes tagged with subjectId 'hackathon' (Define a Good Problem,
+// Customer Discovery Field Trip, Hackathon Framework, etc.). Gives a more
+// concrete, builder-mode prep than the generic prep agent.
+async function hackathonPrep(className, previousNotes) {
+  const system = `Eres el agente de Hackathon Assistant de Fede en el Pre-University Summer Program de IE University. Tu trabajo es prepararlo en modo "builder" antes de cada sesión de hackathon, para que llegue con ventaja frente al resto de los equipos. Sé táctico y concreto, como un mentor de startups. Máximo 180 palabras. Responde en español.`;
+  const user = `Va a entrar a la sesión de hackathon "${className}". Notas previas relacionadas: ${JSON.stringify(previousNotes)}. Dame: 1) Qué debería tener listo o decidido ANTES de entrar (problema, hipótesis, datos). 2) Una técnica concreta de customer discovery o framing de problema que pueda usar hoy. 3) Una pregunta incómoda que debería hacerse a sí mismo o a su equipo para no enamorarse de la primera idea.`;
+  return callDeepSeek(system, user, 500);
+}
+
+// Pitch Practice Bot — fires instead of the generic Pre-Class Prep for
+// classes tagged with subjectId 'pitch' (VR pitch practice, pitch
+// competitions, elevator pitch, finals). Simulates judge pressure.
+async function pitchPrep(className, previousNotes) {
+  const system = `Eres el Pitch Practice Bot de Fede en el Pre-University Summer Program de IE University. Tu trabajo es ponerlo en modo competencia antes de cada sesión de pitch, simulando lo que un jurado exigente le preguntaría. Sé directo y exigente pero motivador. Máximo 180 palabras. Responde en español.`;
+  const user = `Va a entrar a la sesión "${className}". Notas previas de pitch/storytelling: ${JSON.stringify(previousNotes)}. Dame: 1) Las 3 preguntas más duras que un jurado de inversión le haría hoy sobre su idea o pitch. 2) Un error común de storytelling que debe evitar en esta sesión específica. 3) Una frase de apertura (hook) que podría probar para captar atención en los primeros 10 segundos.`;
+  return callDeepSeek(system, user, 500);
+}
+
+// Contact Follow-up Agent — runs nightly over contacts added that day.
+// Suggests one concrete follow-up message per contact (LinkedIn/email/IG)
+// so Fede doesn't lose the connection once the program ends.
+async function contactFollowup(contacts) {
+  const system = `Eres el agente de seguimiento de contactos de Fede en el Pre-University Summer Program de IE University. Tu trabajo es ayudarlo a no perder las conexiones que está haciendo con gente de todo el mundo. Sé cálido pero práctico. Máximo 220 palabras. Responde en español.`;
+  const user = `Hoy Fede agregó estos contactos nuevos: ${JSON.stringify(contacts)}. Para cada contacto, dame un mensaje corto y específico (1-2 frases, en inglés si el contacto parece no hispanohablante) que podría mandarle por LinkedIn/Instagram/email para mantener el contacto, mencionando algo concreto de lo que compartieron si la info lo permite. Si no hay suficiente info, sugiere una pregunta genuina para conocerlo mejor.`;
+  return callDeepSeek(system, user, 700);
+}
+
+module.exports = {
+  callDeepSeek,
+  morningIntelligence,
+  preClassPrep,
+  nightDeepdive,
+  weekendRecap,
+  hackathonPrep,
+  pitchPrep,
+  contactFollowup,
+};

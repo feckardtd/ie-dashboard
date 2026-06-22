@@ -1,6 +1,6 @@
 # IE Dashboard
 
-Dashboard personal para el IE University Summer School 2026 (Segovia → Madrid, 28 jun – 11 jul 2026). Organiza clases, notas, contactos y reflexiones, y manda mensajes automáticos por Telegram generados por 3 agentes de IA.
+Dashboard personal para el IE University Summer School 2026 (Segovia → Madrid, 28 jun – 11 jul 2026). Organiza clases, notas, contactos y reflexiones, y manda mensajes automáticos por Telegram generados por 7 agentes de IA.
 
 - **App en vivo**: https://ie-dashboard-ecru.vercel.app
 - **Backend (bot de Telegram)**: https://ie-dashboard-production.up.railway.app
@@ -19,10 +19,17 @@ Dashboard personal para el IE University Summer School 2026 (Segovia → Madrid,
 |---|---|---|
 | 🌅 Morning Intelligence | 7:00 AM hora España, todos los días | Resume las notas de ayer + conecta con las clases de hoy |
 | 📚 Pre-Class Prep | 30 min antes de cada clase | Busca notas pasadas del subject y prepara contexto |
+| ⚡ Hackathon Assistant | 30 min antes de clases de hackathon | Prep táctica modo builder (reemplaza a Pre-Class Prep en esas clases) |
+| 🎤 Pitch Practice Bot | 30 min antes de clases de pitch | Simula preguntas de jurado (reemplaza a Pre-Class Prep en esas clases) |
 | 🌙 Night Deepdive | 9:00 PM hora España, todos los días | Profundiza 3x en las notas del día |
 | 🗂️ Weekend Recap | Domingos 6:00 PM hora España | Junta notas + reflexiones de la semana y da un plan para la próxima |
+| 🤝 Contact Follow-up | 10:30 PM hora España, todos los días | Sugiere mensajes de seguimiento para contactos nuevos del día |
 
-El código de los 4 jobs vive en `backend/src/jobs/`.
+El código de los jobs vive en `backend/src/jobs/` (Hackathon Assistant y Pitch Practice Bot viven dentro de `preClassPrep.js`, no son cron jobs aparte).
+
+## Notion
+
+Hub de respaldo manual con notas, reflexiones, contactos y la tabla de agentes: https://app.notion.com/p/387470a1dd018192b7bdc6fca1cb91f1 — el sync hoy es manual; automatizarlo desde Railway requiere un `NOTION_API_KEY` (no configurado todavía).
 
 ## Calendario
 

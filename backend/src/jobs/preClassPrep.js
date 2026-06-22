@@ -1,6 +1,10 @@
 const { DateTime } = require('luxon');
 const { getNotesForClasses, getNotifiedClassIds, markClassNotified } = require('../lib/supabase');
-const { preClassPrep: generatePrep } = require('../lib/deepseek');
+const {
+  preClassPrep: generatePrep,
+  hackathonPrep: generateHackathonPrep,
+  pitchPrep: generatePitchPrep,
+} = require('../lib/deepseek');
 const { sendTelegramMessage } = require('../lib/telegram');
 const { CLASSES, getSubject, getClassStart, TIMEZONE } = require('../data/schedule');
 
@@ -34,6 +38,15 @@ async function checkUpcomingClasses() {
   }
 }
 
+// Specialized agents take over for certain subjects instead of the generic
+// Pre-Class Prep, with their own emoji/title/prompt — Hackathon Assistant
+// for hackathon sessions, Pitch Practice Bot for pitch sessions. Everything
+// else (sustainability, AI, prototyping, etc.) keeps using the generic prep.
+const SPECIALIZED_AGENTS = {
+  hackathon: { emoji: '⚡', title: 'Hackathon Assistant', generate: generateHackathonPrep },
+  pitch: { emoji: '🎤', title: 'Pitch Practice Bot', generate: generatePitchPrep },
+};
+
 async function sendPreClassPrep(cls) {
   const subject = getSubject(cls.subjectId);
   const subjectClassIds = CLASSES.filter((c) => c.subjectId === cls.subjectId).map((c) => c.id);
@@ -44,6 +57,14 @@ async function sendPreClassPrep(cls) {
   const previousNotes = (notes || [])
     .filter((n) => n.content)
     .map((n) => ({ clase: cls.name, notas: n.content }));
+
+  const specialized = SPECIALIZED_AGENTS[cls.subjectId];
+  if (specialized) {
+    const message = await specialized.generate(cls.name, previousNotes);
+    await sendTelegramMessage(`${specialized.emoji} <b>${specialized.title} — ${cls.name}</b>\n\n${message}`);
+    console.log(`[preclass] enviado (${specialized.title}) para ${cls.id} (${cls.name})`);
+    return;
+  }
 
   const message = await generatePrep(cls.name, subject?.name, previousNotes);
   await sendTelegramMessage(`📚 <b>Pre-Class Prep — ${cls.name}</b>\n\n${message}`);

@@ -7,6 +7,7 @@ const { runMorningIntelligence } = require('./jobs/morningIntelligence');
 const { runNightDeepdive } = require('./jobs/nightDeepdive');
 const { checkUpcomingClasses } = require('./jobs/preClassPrep');
 const { runWeekendRecap } = require('./jobs/weekendRecap');
+const { runContactFollowup } = require('./jobs/contactFollowup');
 
 const REQUIRED_ENV = [
   'DEEPSEEK_API_KEY',
@@ -70,6 +71,16 @@ app.get('/test/weekend', async (req, res) => {
   }
 });
 
+app.get('/test/contacts', async (req, res) => {
+  try {
+    await runContactFollowup();
+    res.json({ ok: true, note: 'Solo envía mensaje si hay contactos agregados en las últimas 24h.' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`ie-dashboard-bot escuchando en puerto ${PORT} (zona horaria ${TIMEZONE})`);
 });
@@ -110,4 +121,14 @@ cron.schedule(
   { timezone: TIMEZONE }
 );
 
-console.log('Cron jobs programados: Morning Intelligence (7:00), Night Deepdive (21:00), Pre-Class Prep (cada 5 min), Weekend Recap (domingo 18:00).');
+// Contact Follow-up — todos los días 10:30 PM hora de España (después de
+// Night Deepdive, para revisar contactos agregados durante el día)
+cron.schedule(
+  '30 22 * * *',
+  () => {
+    runContactFollowup().catch((e) => console.error('[contacts] error:', e.message));
+  },
+  { timezone: TIMEZONE }
+);
+
+console.log('Cron jobs programados: Morning Intelligence (7:00), Night Deepdive (21:00), Pre-Class Prep (cada 5 min), Weekend Recap (domingo 18:00), Contact Follow-up (22:30).');
