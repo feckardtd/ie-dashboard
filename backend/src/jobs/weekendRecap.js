@@ -49,7 +49,10 @@ async function runWeekendRecap() {
 // sync semanal manual (vía tarea programada de Claude) sigue siendo el
 // respaldo. Un error de Notion nunca debe tumbar el job principal.
 async function syncToNotion(weekLabel, recapText) {
-  if (!isNotionConfigured()) return;
+  if (!isNotionConfigured()) {
+    console.log('[weekend] NOTION_API_KEY no detectada en este proceso, omito sync directo');
+    return;
+  }
   try {
     await appendWeeklyRecapToNotion({ weekLabel, recapText });
     console.log('[weekend] sync directo a Notion OK');
