@@ -6,6 +6,10 @@
 
 const NOTION_VERSION = '2022-06-28';
 const MAX_BLOCK_CHARS = 1900; // límite real de Notion es 2000 por rich_text
+// ID del Hub de Notion de Fede. No es secreto (es solo un identificador de
+// página), así que va hardcodeado de respaldo por si no se setea
+// NOTION_PAGE_ID en Railway. Solo NOTION_API_KEY es obligatorio configurar.
+const DEFAULT_PAGE_ID = '387470a1dd018192b7bdc6fca1cb91f1';
 
 function chunkText(text, size) {
   const chunks = [];
@@ -32,7 +36,7 @@ function headingBlock(content) {
 }
 
 function isNotionConfigured() {
-  return Boolean(process.env.NOTION_API_KEY && process.env.NOTION_PAGE_ID);
+  return Boolean(process.env.NOTION_API_KEY);
 }
 
 // Agrega al final del Hub de Notion un bloque con el recap semanal.
@@ -40,12 +44,12 @@ function isNotionConfigured() {
 // manual semanal de Claude sigue funcionando como respaldo).
 async function appendWeeklyRecapToNotion({ weekLabel, recapText }) {
   if (!isNotionConfigured()) {
-    console.log('[notion] NOTION_API_KEY / NOTION_PAGE_ID no configuradas, omito sync directo');
+    console.log('[notion] NOTION_API_KEY no configurada, omito sync directo');
     return { skipped: true };
   }
 
   const apiKey = process.env.NOTION_API_KEY;
-  const pageId = process.env.NOTION_PAGE_ID;
+  const pageId = process.env.NOTION_PAGE_ID || DEFAULT_PAGE_ID;
   const url = `https://api.notion.com/v1/blocks/${pageId}/children`;
 
   const children = [
