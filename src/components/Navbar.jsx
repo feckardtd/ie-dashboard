@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calendar, BookOpen, Users, Bot, BookMarked, User } from 'lucide-react';
+import { LayoutDashboard, Calendar, BookOpen, Users, Bot, BookMarked, User, Plane } from 'lucide-react';
 
 const NAV = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -9,33 +9,35 @@ const NAV = [
   { to: '/contactos', icon: Users, label: 'Contactos' },
   { to: '/agentes', icon: Bot, label: 'Agentes' },
   { to: '/reflexiones', icon: BookMarked, label: 'Reflexiones' },
+  { to: '/checklist', icon: Plane, label: 'Checklist' },
   { to: '/perfil', icon: User, label: 'Mi Perfil' },
 ];
 
 export default function Navbar() {
   return (
-    <nav style={styles.nav}>
-      <div style={styles.logo}>
+    <nav className="app-sidebar" style={styles.nav}>
+      <div className="sidebar-logo" style={styles.logo}>
         <span style={styles.logoText}>FE</span>
         <span style={styles.logoSub}>IE '26</span>
       </div>
-      <div style={styles.links}>
+      <div className="sidebar-links" style={styles.links}>
         {NAV.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             end={to === '/'}
+            className="sidebar-link"
             style={({ isActive }) => ({
               ...styles.link,
               ...(isActive ? styles.linkActive : {}),
             })}
           >
             <Icon size={16} />
-            <span style={styles.linkLabel}>{label}</span>
+            <span className="sidebar-link-label" style={styles.linkLabel}>{label}</span>
           </NavLink>
         ))}
       </div>
-      <div style={styles.status}>
+      <div className="sidebar-status" style={styles.status}>
         <span style={styles.dot} />
         <span style={styles.statusText}>Sistema activo</span>
       </div>

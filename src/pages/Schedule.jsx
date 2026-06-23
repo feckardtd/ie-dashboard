@@ -46,7 +46,7 @@ export default function Schedule() {
   const current = WEEKS.find(w => w.week === activeWeek);
 
   return (
-    <div style={styles.page}>
+    <div className="page-pad" style={styles.page}>
       <h1 style={styles.title}>Schedule <span style={{ color: 'var(--accent)' }}>Visual</span></h1>
       <p style={styles.sub}>Vista semanal del programa · click en una clase para ver notas</p>
 

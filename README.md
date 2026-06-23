@@ -1,6 +1,6 @@
 # IE Dashboard
 
-Dashboard personal para el IE University Summer School 2026 (Segovia → Madrid, 28 jun – 11 jul 2026). Organiza clases, notas, contactos y reflexiones, y manda mensajes automáticos por Telegram generados por 7 agentes de IA.
+Dashboard personal para el IE University Summer School 2026 (Segovia → Madrid, 28 jun – 11 jul 2026). Organiza clases, notas, contactos, reflexiones y un checklist pre-viaje, y manda mensajes automáticos por Telegram generados por 8 agentes de IA. Diseño responsive (sidebar fija en desktop, tab bar inferior en móvil).
 
 - **App en vivo**: https://ie-dashboard-ecru.vercel.app
 - **Backend (bot de Telegram)**: https://ie-dashboard-production.up.railway.app
@@ -23,6 +23,7 @@ Dashboard personal para el IE University Summer School 2026 (Segovia → Madrid,
 | 🎤 Pitch Practice Bot | 30 min antes de clases de pitch | Simula preguntas de jurado (reemplaza a Pre-Class Prep en esas clases) |
 | 🌙 Night Deepdive | 9:00 PM hora España, todos los días | Profundiza 3x en las notas del día |
 | 🗂️ Weekend Recap | Domingos 6:00 PM hora España | Junta notas + reflexiones de la semana y da un plan para la próxima |
+| 🌐 Networking Icebreaker | 12:30 PM hora España, todos los días | Antes del almuerzo, da un tema de conversación, un tip cultural/de idioma y una forma de sumar a alguien nuevo a un plan |
 | 🤝 Contact Follow-up | 10:30 PM hora España, todos los días | Sugiere mensajes de seguimiento para contactos nuevos del día |
 
 El código de los jobs vive en `backend/src/jobs/` (Hackathon Assistant y Pitch Practice Bot viven dentro de `preClassPrep.js`, no son cron jobs aparte).
@@ -34,6 +35,14 @@ Hub de respaldo con notas, reflexiones, contactos y la tabla de agentes: https:/
 ## Calendario
 
 Las 28 clases del programa (horarios estimados) están sincronizadas como eventos en el Google Calendar de Fede (`federicoeckardtd@gmail.com`), con ubicación (Segovia/Madrid) y subject en la descripción. Cuando se confirme el horario real, hay que borrar y recrear estos eventos con la hora correcta — no se actualizan automáticamente.
+
+## Checklist pre-viaje
+
+Página `/checklist` con documentos, equipaje, dinero/conectividad y mentalidad antes del 28 jun. El progreso se guarda en `localStorage` (es personal, de un solo dispositivo).
+
+## Fotos de notas (papel, Apple Notes, Freeform)
+
+En cada clase (`/clases/:id`) hay un uploader de fotos junto al editor de notas: sirve para subir fotos de notas escritas a mano o capturas de pantalla de Apple Notes/Freeform. Se guardan en el bucket público de Supabase Storage `note-photos` y sus URLs en la columna `photo_urls` (jsonb) de la tabla `notes`.
 
 ## Estructura
 

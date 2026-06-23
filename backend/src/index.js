@@ -8,6 +8,7 @@ const { runNightDeepdive } = require('./jobs/nightDeepdive');
 const { checkUpcomingClasses } = require('./jobs/preClassPrep');
 const { runWeekendRecap } = require('./jobs/weekendRecap');
 const { runContactFollowup } = require('./jobs/contactFollowup');
+const { runNetworkingIcebreaker } = require('./jobs/networkingIcebreaker');
 
 const REQUIRED_ENV = [
   'DEEPSEEK_API_KEY',
@@ -81,6 +82,16 @@ app.get('/test/contacts', async (req, res) => {
   }
 });
 
+app.get('/test/networking', async (req, res) => {
+  try {
+    await runNetworkingIcebreaker();
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`ie-dashboard-bot escuchando en puerto ${PORT} (zona horaria ${TIMEZONE})`);
 });
@@ -131,4 +142,15 @@ cron.schedule(
   { timezone: TIMEZONE }
 );
 
-console.log('Cron jobs programados: Morning Intelligence (7:00), Night Deepdive (21:00), Pre-Class Prep (cada 5 min), Weekend Recap (domingo 18:00), Contact Follow-up (22:30).');
+// Networking Icebreaker — todos los días 12:30 PM hora de España, antes
+// del almuerzo/tiempo libre, que es cuando pasa la mayoría del networking
+// informal del programa.
+cron.schedule(
+  '30 12 * * *',
+  () => {
+    runNetworkingIcebreaker().catch((e) => console.error('[networking] error:', e.message));
+  },
+  { timezone: TIMEZONE }
+);
+
+console.log('Cron jobs programados: Morning Intelligence (7:00), Night Deepdive (21:00), Pre-Class Prep (cada 5 min), Networking Icebreaker (12:30), Weekend Recap (domingo 18:00), Contact Follow-up (22:30).');

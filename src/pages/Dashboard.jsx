@@ -40,14 +40,14 @@ export default function Dashboard() {
   const STAT_CARDS = [
     { icon: BookOpen, label: 'Clases totales', value: CLASSES.length, color: 'var(--accent)', to: '/clases' },
     { icon: Users, label: 'Contactos', value: stats.contacts, color: 'var(--gold)', to: '/contactos' },
-    { icon: Bot, label: 'Agentes activos', value: 3, color: 'var(--green)', to: '/agentes' },
+    { icon: Bot, label: 'Agentes activos', value: 8, color: 'var(--green)', to: '/agentes' },
     { icon: BookMarked, label: 'Reflexiones', value: stats.notes, color: '#ec4899', to: '/reflexiones' },
   ];
 
   return (
-    <div style={styles.page}>
+    <div className="page-pad" style={styles.page}>
       {/* Header */}
-      <div style={styles.header}>
+      <div className="stack-mobile" style={styles.header}>
         <div>
           <p style={styles.greeting}>Buenos días, Fede</p>
           <h1 style={styles.title}>IE University <span style={styles.titleAccent}>Dashboard</span></h1>
@@ -84,7 +84,7 @@ export default function Dashboard() {
       )}
 
       {/* Stats */}
-      <div style={styles.grid4}>
+      <div className="responsive-grid" style={styles.grid4}>
         {STAT_CARDS.map(({ icon: Icon, label, value, color, to }) => (
           <Link to={to} key={label} style={styles.statCard}>
             <div style={{ ...styles.statIcon, background: color + '22', border: `1px solid ${color}44` }}>
@@ -131,7 +131,7 @@ export default function Dashboard() {
           <BookOpen size={16} style={{ color: 'var(--accent)' }} />
           Subjects del programa
         </h2>
-        <div style={styles.subjectGrid}>
+        <div className="responsive-grid" style={styles.subjectGrid}>
           {SUBJECTS.map(s => {
             const count = CLASSES.filter(c => c.subjectId === s.id).length;
             return (

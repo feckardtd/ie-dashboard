@@ -23,9 +23,9 @@ export default function MiPerfil() {
   const [bio, setBio] = useState('Estudiante colombiano de 16 años buscando crecer, conectar y aprender en IE University Summer School 2026.');
 
   return (
-    <div style={styles.page}>
+    <div className="page-pad" style={styles.page}>
       {/* Profile Header */}
-      <div style={styles.profileHeader}>
+      <div className="stack-mobile" style={styles.profileHeader}>
         <div style={styles.avatarWrap}>
           <div style={styles.avatar}>FE</div>
           <div style={styles.avatarGlow} />
@@ -62,7 +62,7 @@ export default function MiPerfil() {
       {/* Objectives */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>Objetivos del Programa</h2>
-        <div style={styles.objectivesGrid}>
+        <div className="responsive-grid" style={styles.objectivesGrid}>
           {OBJECTIVES.map(obj => {
             const Icon = obj.icon;
             const statusIdx = progress[obj.id];
@@ -102,14 +102,14 @@ export default function MiPerfil() {
       {/* Program Stats */}
       <div style={styles.statsSection}>
         <h2 style={styles.sectionTitle}>El Programa</h2>
-        <div style={styles.statsGrid}>
+        <div className="responsive-grid" style={styles.statsGrid}>
           {[
             { label: 'Total de clases', value: '28', icon: '📚' },
             { label: 'Subjects', value: '8', icon: '🎯' },
             { label: 'Semanas', value: '2', icon: '📅' },
             { label: 'Ciudades', value: '2', icon: '📍' },
             { label: 'Actividades extra', value: '10+', icon: '⚡' },
-            { label: 'Agentes IA', value: '3', icon: '🤖' },
+            { label: 'Agentes IA', value: '8', icon: '🤖' },
           ].map(({ label, value, icon }) => (
             <div key={label} style={styles.statCard}>
               <span style={{ fontSize: 24 }}>{icon}</span>

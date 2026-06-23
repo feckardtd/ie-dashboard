@@ -4,7 +4,7 @@
 
 ## Contexto del proyecto
 
-Soy Fede (federicoeckardtd@gmail.com), estudiante que va al IE University Summer School 2026 (Segovia → Madrid, 28 jun – 11 jul 2026). Tengo un dashboard web personal para organizar clases, notas, contactos y reflexiones del programa, con 7 agentes de IA que me mandan mensajes por Telegram.
+Soy Fede (federicoeckardtd@gmail.com), estudiante que va al IE University Summer School 2026 (Segovia → Madrid, 28 jun – 11 jul 2026). Tengo un dashboard web personal para organizar clases, notas, contactos y reflexiones del programa, con 8 agentes de IA que me mandan mensajes por Telegram.
 
 - **Frontend en vivo**: https://ie-dashboard-ecru.vercel.app
 - **Backend en vivo**: https://ie-dashboard-production.up.railway.app
@@ -20,15 +20,31 @@ Soy Fede (federicoeckardtd@gmail.com), estudiante que va al IE University Summer
 4. Página `/schedule`: calendario visual semanal (`src/pages/Schedule.jsx`), tabs Semana 1 (Segovia) / Semana 2 (Madrid), leyenda de colores por subject.
 5. Navbar con link a Schedule.
 6. **Backend de Telegram + DeepSeek + Supabase deployado en Railway** (`backend/`):
-   - Express + node-cron, 7 jobs: Morning Intelligence (7:00 AM), Pre-Class Prep (checa cada 5 min si hay clase en ~30 min), Hackathon Assistant (toma el lugar de Pre-Class Prep en clases del subject `hackathon`), Pitch Practice Bot (idem para subject `pitch`), Night Deepdive (9:00 PM), Weekend Recap (domingos 6:00 PM), Contact Follow-up (10:30 PM diario, revisa contactos nuevos de las últimas 24h).
+   - Express + node-cron, 8 jobs: Morning Intelligence (7:00 AM), Pre-Class Prep (checa cada 5 min si hay clase en ~30 min), Hackathon Assistant (toma el lugar de Pre-Class Prep en clases del subject `hackathon`), Pitch Practice Bot (idem para subject `pitch`), Night Deepdive (9:00 PM), Networking Icebreaker (12:30 PM diario, antes del almuerzo), Weekend Recap (domingos 6:00 PM), Contact Follow-up (10:30 PM diario, revisa contactos nuevos de las últimas 24h).
    - Hackathon Assistant y Pitch Practice Bot NO son cron jobs aparte — viven dentro de `preClassPrep.js` (`SPECIALIZED_AGENTS` map por `subjectId`), así que comparten el mismo check de "30 min antes" y el mismo dedup de Supabase, pero generan un mensaje distinto (prompts en `deepseek.js`: `hackathonPrep`, `pitchPrep`).
+   - Networking Icebreaker (`jobs/networkingIcebreaker.js`) sí es su propio cron job — no depende de que haya notas/contactos nuevos (a diferencia de Contact Follow-up), porque el objetivo es dar un empujón ANTES de la próxima interacción social, no después.
    - Generación de texto vía DeepSeek API, contexto desde Supabase, envío vía Telegram Bot API.
    - Dedup de Pre-Class Prep (incluye Hackathon/Pitch) persistido en Supabase (tabla `preclass_notifications`) — sobrevive reinicios de Railway.
-   - URL pública: https://ie-dashboard-production.up.railway.app — endpoints de prueba manual: `/test/morning`, `/test/deepdive`, `/test/preclass`, `/test/weekend`, `/test/contacts`.
-   - Verificado end-to-end: Morning/Deepdive/Pre-Class probados en producción con mensajes confirmados recibidos en Telegram. Weekend Recap, Contact Follow-up, Hackathon Assistant y Pitch Practice Bot están deployados pero todavía no se probaron manualmente con datos reales — el programa no ha empezado (arranca 28 jun 2026), así que `notes`/`reflections` están vacías y solo hay un contacto de prueba en Supabase. Correr los endpoints `/test/*` dará los mensajes de fallback ("sin datos") hasta que haya contenido real.
+   - URL pública: https://ie-dashboard-production.up.railway.app — endpoints de prueba manual: `/test/morning`, `/test/deepdive`, `/test/preclass`, `/test/weekend`, `/test/contacts`, `/test/networking`.
+   - Verificado end-to-end con datos reales en Supabase (notas + reflexión de prueba insertadas y luego limpiadas): `/test/deepdive`, `/test/weekend` y `/test/morning` corrieron sin error generando mensajes a partir de contenido real, no solo el fallback de "sin datos". Networking Icebreaker y Contact Follow-up están deployados pero aún no probados con datos reales — el programa no ha empezado (arranca 28 jun 2026).
 7. **Las 28 clases del programa están sincronizadas como eventos en el Google Calendar de Fede** (con horarios estimados, ubicación y subject) — ver sección de pendientes abajo sobre por qué hay que recrearlos cuando se confirme el horario real.
-8. **Notion Hub creado** como espejo/backup del dashboard (notas, reflexiones, contactos, tabla de los 7 agentes): https://app.notion.com/p/387470a1dd018192b7bdc6fca1cb91f1 — el sync ya **no es solo manual**: hay una tarea programada de Claude (`ie-notion-weekly-sync`, domingos 7:00 PM hora local) que lee Supabase y actualiza la página automáticamente cada semana. Sigue siendo Claude quien escribe (no el backend de Railway directamente), pero ya no requiere que Fede lo pida cada vez. Para que el backend mismo escriba en Notion sin pasar por Claude haría falta un `NOTION_API_KEY` (ver sección de pendientes) — opcional, no urgente mientras la tarea programada funcione.
+8. **Notion Hub creado** como espejo/backup del dashboard (notas, reflexiones, contactos, tabla de los 8 agentes): https://app.notion.com/p/387470a1dd018192b7bdc6fca1cb91f1 — el sync ya **no es solo manual**: hay una tarea programada de Claude (`ie-notion-weekly-sync`, domingos 7:00 PM hora local) que lee Supabase y actualiza la página automáticamente cada semana. Sigue siendo Claude quien escribe (no el backend de Railway directamente), pero ya no requiere que Fede lo pida cada vez. Para que el backend mismo escriba en Notion sin pasar por Claude haría falta un `NOTION_API_KEY` (ver sección de pendientes) — opcional, no urgente mientras la tarea programada funcione.
 9. Todo pusheado a GitHub (`main`).
+10. **Pase de diseño/UI mobile** (local, no pusheado aún): el frontend usa estilos inline en todas las páginas, así que se agregó un puente de clases utilitarias globales en `src/index.css` (`@media (max-width: 768px)` con `!important`): `.app-sidebar`/`.app-main` convierten la sidebar fija en una tab bar inferior en pantallas chicas, `.page-pad` reduce el padding, `.responsive-grid` colapsa grids multi-columna a 1 columna, `.modal-card` limita el ancho de modales, `.stack-mobile` apila headers flex. Aplicado en Dashboard, Schedule, Clases (ambas vistas), Contactos, Reflexiones, Mi Perfil, Agentes y Checklist.
+11. **Página `/checklist`** (`src/pages/Checklist.jsx`, local, no pusheada aún): checklist pre-viaje con 4 secciones (documentos, equipaje, dinero/conectividad, mentalidad), progreso guardado en `localStorage`. Agregada al navbar.
+12. **Fotos de notas a mano / Apple Notes / Freeform** (local, no pusheado aún): en `/clases/:id` ahora hay un uploader real de fotos (antes decía "coming soon"). Las fotos se suben al bucket público de Supabase Storage `note-photos` (creado vía migración + políticas RLS de storage.objects para select/insert/delete) y sus URLs se guardan en la nueva columna `notes.photo_urls` (jsonb). Helpers en `src/lib/supabase.js`: `uploadNotePhoto(classId, file)` y `saveNotePhotos(classId, photoUrls)`. Esquema actualizado en `supabase_setup.sql` para que quede documentado si se recrea la DB desde cero.
+
+## Pendiente inmediato: pushear los cambios de esta sesión
+
+Los puntos 10, 11 y 12 de arriba (mobile responsiveness, `/checklist`, fotos de notas) están hechos y verificados (build compila, migraciones de Supabase ya aplicadas) pero **solo en local** — no se han commiteado ni pusheado. Desde la carpeta del proyecto:
+
+```
+git add -A
+git commit -m "Mobile responsiveness, checklist pre-viaje, y fotos de notas (papel/Apple Notes/Freeform)"
+git push
+```
+
+Vercel debería redeployar automáticamente al pushear a `main`.
 
 ## Único pendiente real
 
@@ -69,12 +85,12 @@ Las 5 variables (`DEEPSEEK_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `TELEG
 
 ## Archivos clave para orientarse rápido
 
-- `src/App.js` — rutas: `/`, `/schedule`, `/clases`, `/clases/:id`, `/contactos`, `/agentes`, `/reflexiones`, `/perfil`.
+- `src/App.js` — rutas: `/`, `/schedule`, `/clases`, `/clases/:id`, `/contactos`, `/agentes`, `/reflexiones`, `/checklist`, `/perfil`.
 - `src/data/schedule.js` / `backend/src/data/schedule.js` — fuente de verdad de `SUBJECTS` (8) y `CLASSES` (28). Deben mantenerse sincronizados.
 - `backend/src/index.js` — entrypoint del backend, define los cron jobs y las rutas de test manual.
 - `backend/src/jobs/` — lógica de cada agente (morningIntelligence, nightDeepdive, preClassPrep [incluye Hackathon Assistant y Pitch Practice Bot], weekendRecap, contactFollowup).
 - `backend/src/lib/` — clientes de DeepSeek, Supabase y Telegram.
-- `src/pages/Agentes.jsx` — UI de los 7 agentes en el dashboard.
+- `src/pages/Agentes.jsx` — UI de los 8 agentes en el dashboard.
 
 ## Primer paso recomendado al continuar
 

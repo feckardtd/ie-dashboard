@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS notes (
   class_id TEXT UNIQUE NOT NULL,
   content TEXT DEFAULT '',
   professor TEXT DEFAULT '',
+  photo_urls JSONB NOT NULL DEFAULT '[]'::jsonb, -- fotos de notas a mano / Apple Notes / Freeform
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -43,3 +44,11 @@ ALTER TABLE reflections ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all" ON notes FOR ALL USING (true);
 CREATE POLICY "Allow all" ON contacts FOR ALL USING (true);
 CREATE POLICY "Allow all" ON reflections FOR ALL USING (true);
+
+-- STORAGE: bucket público para fotos de notas a mano / Apple Notes / Freeform
+INSERT INTO storage.buckets (id, name, public) VALUES ('note-photos', 'note-photos', true)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "note-photos public read" ON storage.objects FOR SELECT USING (bucket_id = 'note-photos');
+CREATE POLICY "note-photos public insert" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'note-photos');
+CREATE POLICY "note-photos public delete" ON storage.objects FOR DELETE USING (bucket_id = 'note-photos');

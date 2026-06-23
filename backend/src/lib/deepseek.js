@@ -85,6 +85,17 @@ async function contactFollowup(contacts) {
   return callDeepSeek(system, user, 700);
 }
 
+// Networking Icebreaker Bot — fires antes del almuerzo/socializar. El
+// programa junta gente de decenas de países, así que el cuello de botella
+// no es encontrar gente nueva sino tener algo mejor que decir que "where
+// are you from". Da 1 pregunta/tema concreto y, si hoy hubo clases
+// relevantes, lo conecta con eso para que suene genuino y no genérico.
+async function networkingIcebreaker(todayClasses, recentContacts) {
+  const system = `Eres el agente de networking de Fede en el Pre-University Summer Program de IE University, un programa con estudiantes de decenas de países. Tu trabajo es ayudarlo a tener conversaciones genuinas (no genéricas) con gente nueva en almuerzos, tiempo libre o eventos sociales. Sé cálido, concreto y nada cursi. Máximo 150 palabras. Responde en español.`;
+  const user = `Clases de hoy: ${todayClasses.map((c) => c.name).join(', ') || 'ninguna'}. Contactos que ya hizo recientemente: ${JSON.stringify(recentContacts)}. Dame: 1) Una pregunta o tema de conversación mejor que "where are you from" para usar hoy en el almuerzo o tiempo libre, idealmente conectado con las clases de hoy. 2) Un micro-tip cultural o de idioma útil para una conversación con alguien de otro país (puede ser inglés si aplica). 3) Una forma natural de invitar a alguien nuevo a sentarse junto/sumarse a un plan, sin que se sienta forzado.`;
+  return callDeepSeek(system, user, 500);
+}
+
 module.exports = {
   callDeepSeek,
   morningIntelligence,
@@ -94,4 +105,5 @@ module.exports = {
   hackathonPrep,
   pitchPrep,
   contactFollowup,
+  networkingIcebreaker,
 };

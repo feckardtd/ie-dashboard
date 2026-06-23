@@ -38,3 +38,71 @@ body {
 button { cursor: pointer; font-family: var(--font); }
 input, textarea { font-family: var(--font); }
 a { color: inherit; text-decoration: none; }
+
+/* ─── Mobile responsiveness ─────────────────────────────────────────────
+   The app is built with inline styles (desktop-first), so a handful of
+   utility classes here use !important to override them specifically on
+   small screens. Apply `page-pad` to page wrappers, `responsive-grid` to
+   any multi-column grid that should stack on mobile, and `modal-card` to
+   fixed-width modals. */
+@media (max-width: 768px) {
+  .app-sidebar {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 64px !important;
+    flex-direction: row !important;
+    padding: 0 !important;
+    border-right: none !important;
+    border-top: 1px solid var(--border);
+  }
+  .app-sidebar .sidebar-logo,
+  .app-sidebar .sidebar-status {
+    display: none !important;
+  }
+  .app-sidebar .sidebar-links {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100%;
+    padding: 0 4px !important;
+    overflow-x: auto;
+  }
+  .app-sidebar .sidebar-link {
+    flex-direction: column !important;
+    gap: 2px !important;
+    padding: 8px 4px !important;
+    flex: 1;
+    min-width: 0;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .app-sidebar .sidebar-link-label {
+    font-size: 9px !important;
+  }
+  .app-main {
+    margin-left: 0 !important;
+    padding-bottom: 76px !important;
+  }
+  .page-pad {
+    padding: 18px !important;
+  }
+  .responsive-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .modal-card {
+    width: 92vw !important;
+    max-width: 92vw !important;
+  }
+  .stack-mobile {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px !important;
+  }
+  h1 {
+    font-size: 22px !important;
+  }
+}

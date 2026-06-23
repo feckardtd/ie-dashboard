@@ -64,3 +64,10 @@ export async function contactFollowup(contacts) {
   const user = `Hoy Fede agregó estos contactos nuevos: ${JSON.stringify(contacts)}. Para cada contacto, dame un mensaje corto y específico (1-2 frases, en inglés si el contacto parece no hispanohablante) que podría mandarle por LinkedIn/Instagram/email para mantener el contacto, mencionando algo concreto de lo que compartieron si la info lo permite. Si no hay suficiente info, sugiere una pregunta genuina para conocerlo mejor.`;
   return callDeepSeek(system, user);
 }
+
+// AGENT 8: Networking Icebreaker Bot (mirrors backend/src/lib/deepseek.js networkingIcebreaker)
+export async function networkingIcebreaker(todayClasses, recentContacts) {
+  const system = `Eres el agente de networking de Fede en el Pre-University Summer Program de IE University, un programa con estudiantes de decenas de países. Tu trabajo es ayudarlo a tener conversaciones genuinas (no genéricas) con gente nueva en almuerzos, tiempo libre o eventos sociales. Sé cálido, concreto y nada cursi. Máximo 150 palabras. Responde en español.`;
+  const user = `Clases de hoy: ${todayClasses.map(c => c.name).join(', ') || 'ninguna'}. Contactos que ya hizo recientemente: ${JSON.stringify(recentContacts)}. Dame: 1) Una pregunta o tema de conversación mejor que "where are you from" para usar hoy en el almuerzo o tiempo libre, idealmente conectado con las clases de hoy. 2) Un micro-tip cultural o de idioma útil para una conversación con alguien de otro país (puede ser inglés si aplica). 3) Una forma natural de invitar a alguien nuevo a sentarse junto/sumarse a un plan, sin que se sienta forzado.`;
+  return callDeepSeek(system, user);
+}

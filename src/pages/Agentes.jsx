@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Sunrise, BookOpen, Moon, Zap, CalendarDays, Rocket, Mic2, Users } from 'lucide-react';
-import { morningIntelligence, hackathonPrep, pitchPrep, contactFollowup } from '../lib/agents';
+import { Sunrise, BookOpen, Moon, Zap, CalendarDays, Rocket, Mic2, Users, Globe2 } from 'lucide-react';
+import { morningIntelligence, hackathonPrep, pitchPrep, contactFollowup, networkingIcebreaker } from '../lib/agents';
 
 const AGENTS = [
   {
@@ -80,6 +80,17 @@ const AGENTS = [
     telegram: true,
     active: true,
   },
+  {
+    id: 'networking',
+    name: 'Networking Icebreaker',
+    emoji: '🌐',
+    icon: Globe2,
+    color: '#a855f7',
+    time: '12:30 PM, todos los días',
+    description: 'Antes del almuerzo te da un tema de conversación mejor que "where are you from", un tip cultural/de idioma y una forma natural de sumar a alguien nuevo a tu plan.',
+    telegram: true,
+    active: true,
+  },
 ];
 
 // Test data + label per agent that supports a local "Probar ahora" run.
@@ -114,6 +125,14 @@ const TESTABLE_AGENTS = {
         { nombre: 'Maria Lopez', pais: 'México', notas: 'Le interesa sostenibilidad y quiere armar equipo de hackathon' },
       ]),
   },
+  networking: {
+    label: '🌐 Resultado Networking Icebreaker (prueba)',
+    run: () =>
+      networkingIcebreaker(
+        [{ name: 'Sustainability Introduction & SDGs' }, { name: 'Social Impact' }],
+        [{ nombre: 'Maria Lopez', pais: 'México' }]
+      ),
+  },
 };
 
 export default function Agentes() {
@@ -137,9 +156,9 @@ export default function Agentes() {
   };
 
   return (
-    <div style={styles.page}>
+    <div className="page-pad" style={styles.page}>
       <h1 style={styles.title}>Agentes <span style={{ color: 'var(--accent)' }}>IA</span></h1>
-      <p style={styles.sub}>7 agentes activos · conectados a DeepSeek · disponibles en Telegram</p>
+      <p style={styles.sub}>8 agentes activos · conectados a DeepSeek · disponibles en Telegram</p>
 
       {/* How it works */}
       <div style={styles.flowCard}>
@@ -164,6 +183,7 @@ export default function Agentes() {
         </div>
         <p style={{ ...styles.flowTitle, marginTop: 20, marginBottom: 0 }}>+ CADA DOMINGO 6:00 PM — 🗂️ WEEKEND RECAP</p>
         <p style={{ ...styles.flowTitle, marginTop: 8, marginBottom: 0 }}>+ EN CLASES DE HACKATHON/PITCH — ⚡ HACKATHON ASSISTANT / 🎤 PITCH PRACTICE BOT TOMAN EL LUGAR DE PRE-CLASS PREP</p>
+        <p style={{ ...styles.flowTitle, marginTop: 8, marginBottom: 0 }}>+ TODOS LOS DÍAS 12:30 PM — 🌐 NETWORKING ICEBREAKER (ANTES DEL ALMUERZO)</p>
         <p style={{ ...styles.flowTitle, marginTop: 8, marginBottom: 0 }}>+ TODOS LOS DÍAS 10:30 PM — 🤝 CONTACT FOLLOW-UP</p>
       </div>
 
@@ -230,7 +250,7 @@ export default function Agentes() {
             { label: 'DeepSeek API Key', desc: 'Configurada en el backend de Railway', done: true },
             { label: 'Supabase URL + Key', desc: 'Conectado para guardar notas y compartirlas con los agentes', done: true },
             { label: 'Telegram Bot Token', desc: 'Conectado — recibes mensajes automáticos en tu cel', done: true },
-            { label: 'Backend en Railway', desc: 'Los 7 agentes corren 24/7 en la nube con cron jobs', done: true },
+            { label: 'Backend en Railway', desc: 'Los 8 agentes corren 24/7 en la nube con cron jobs', done: true },
           ].map(({ label, desc, done }) => (
             <div key={label} style={styles.setupItem}>
               <span style={{ fontSize: 16 }}>{done ? '✅' : '⏳'}</span>

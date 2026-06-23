@@ -49,11 +49,11 @@ export default function Reflexiones() {
   ];
 
   return (
-    <div style={styles.page}>
+    <div className="page-pad" style={styles.page}>
       <h1 style={styles.title}>Reflexiones <span style={{ color: 'var(--accent)' }}>Diarias</span></h1>
       <p style={styles.sub}>Tu journal privado del programa · visible solo para ti</p>
 
-      <div style={styles.layout}>
+      <div className="responsive-grid" style={styles.layout}>
         {/* Sidebar: dates */}
         <div style={styles.sidebar}>
           <p style={styles.sidebarTitle}>Días del programa</p>

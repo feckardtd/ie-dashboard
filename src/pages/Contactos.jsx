@@ -48,8 +48,8 @@ export default function Contactos() {
   ];
 
   return (
-    <div style={styles.page}>
-      <div style={styles.header}>
+    <div className="page-pad" style={styles.page}>
+      <div className="stack-mobile" style={styles.header}>
         <div>
           <h1 style={styles.title}>Contactos <span style={{ color: 'var(--accent)' }}>IE '26</span></h1>
           <p style={styles.sub}>{contacts.length} personas conectadas en el programa</p>
@@ -81,7 +81,7 @@ export default function Contactos() {
           </p>
         </div>
       ) : (
-        <div style={styles.grid}>
+        <div className="responsive-grid" style={styles.grid}>
           {filtered.map(c => (
             <div key={c.id} style={styles.card} onClick={() => { setForm(c); setShowForm(true); }}>
               <div style={styles.avatar}>
@@ -106,7 +106,7 @@ export default function Contactos() {
       {/* Modal Form */}
       {showForm && (
         <div style={styles.overlay} onClick={e => e.target === e.currentTarget && setShowForm(false)}>
-          <div style={styles.modal}>
+          <div className="modal-card" style={styles.modal}>
             <div style={styles.modalHeader}>
               <h2 style={styles.modalTitle}>{form.id ? 'Editar contacto' : 'Nuevo contacto'}</h2>
               <button style={styles.closeBtn} onClick={() => setShowForm(false)}>
@@ -114,7 +114,7 @@ export default function Contactos() {
               </button>
             </div>
 
-            <div style={styles.formGrid}>
+            <div className="responsive-grid" style={styles.formGrid}>
               <div style={styles.formGroup}>
                 <label style={styles.label}>Nombre *</label>
                 <input style={styles.input} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Nombre completo" />

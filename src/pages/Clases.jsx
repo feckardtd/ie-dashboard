@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { ChevronLeft, Save, Upload, Bot, Sparkles } from 'lucide-react';
+import { ChevronLeft, Save, Upload, Bot, Sparkles, X, ImagePlus } from 'lucide-react';
 import { SUBJECTS, CLASSES } from '../data/schedule';
-import { saveNote, getNote } from '../lib/supabase';
+import { saveNote, getNote, uploadNotePhoto, saveNotePhotos } from '../lib/supabase';
 import { preClassPrep, nightDeepdive } from '../lib/agents';
 
 // ─── SUBJECT LIST ────────────────────────────────────────────────────────────
@@ -11,7 +11,7 @@ export function SubjectList() {
   const filterSubject = searchParams.get('subject');
 
   return (
-    <div style={styles.page}>
+    <div className="page-pad" style={styles.page}>
       <h1 style={styles.pageTitle}>Clases <span style={{ color: 'var(--accent)' }}>& Notas</span></h1>
       <p style={styles.pageSubtitle}>Organizado por subject · Semana 1 Segovia · Semana 2 Madrid</p>
 
@@ -64,6 +64,8 @@ export function ClassDetail() {
   const [agentResponse, setAgentResponse] = useState('');
   const [agentLoading, setAgentLoading] = useState(false);
   const [agentMode, setAgentMode] = useState(null); // 'preclass' | 'deepdive'
+  const [photos, setPhotos] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -71,9 +73,33 @@ export function ClassDetail() {
       if (data) {
         setNotes(data.content || '');
         setProfessor(data.professor || '');
+        setPhotos(data.photo_urls || []);
       }
     });
   }, [id]);
+
+  const handlePhotoSelect = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (files.length === 0) return;
+    setUploading(true);
+    const uploaded = [];
+    for (const file of files) {
+      const { url, error } = await uploadNotePhoto(id, file);
+      if (url) uploaded.push(url);
+      if (error) console.error('Error subiendo foto:', error.message);
+    }
+    const newPhotos = [...photos, ...uploaded];
+    setPhotos(newPhotos);
+    await saveNotePhotos(id, newPhotos);
+    setUploading(false);
+  };
+
+  const handlePhotoRemove = async (url) => {
+    const newPhotos = photos.filter((p) => p !== url);
+    setPhotos(newPhotos);
+    await saveNotePhotos(id, newPhotos);
+  };
 
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -101,10 +127,10 @@ export function ClassDetail() {
     setAgentLoading(false);
   };
 
-  if (!cls) return <div style={styles.page}><p style={{ color: 'var(--text-muted)' }}>Clase no encontrada.</p></div>;
+  if (!cls) return <div className="page-pad" style={styles.page}><p style={{ color: 'var(--text-muted)' }}>Clase no encontrada.</p></div>;
 
   return (
-    <div style={styles.page}>
+    <div className="page-pad" style={styles.page}>
       <Link to="/clases" style={styles.back}>
         <ChevronLeft size={16} /> Volver a clases
       </Link>
@@ -121,7 +147,7 @@ export function ClassDetail() {
         </p>
       </div>
 
-      <div style={styles.grid2}>
+      <div className="responsive-grid" style={styles.grid2}>
         {/* LEFT: Notes */}
         <div style={styles.card}>
           <div style={styles.cardHeader}>
@@ -152,13 +178,37 @@ export function ClassDetail() {
             onChange={e => setNotes(e.target.value)}
           />
 
-          {/* Upload */}
-          <div style={styles.uploadArea}>
+          {/* Upload de fotos: notas a mano, capturas de Apple Notes/Freeform */}
+          <div style={{ ...styles.cardHeader, marginTop: 24 }}>
+            <h3 style={styles.cardTitle}><ImagePlus size={12} /> Fotos de notas a mano / Apple Notes / Freeform</h3>
+          </div>
+          <label style={styles.uploadArea}>
             <Upload size={16} style={{ color: 'var(--text-muted)' }} />
             <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-              Sube los slides o documentos del profe (coming soon)
+              {uploading ? 'Subiendo...' : 'Sube fotos de tus notas en papel, o capturas de Apple Notes / Freeform'}
             </span>
-          </div>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handlePhotoSelect}
+              disabled={uploading}
+              style={{ display: 'none' }}
+            />
+          </label>
+
+          {photos.length > 0 && (
+            <div style={styles.photoGrid}>
+              {photos.map((url) => (
+                <div key={url} style={styles.photoThumb}>
+                  <img src={url} alt="Nota subida" style={styles.photoImg} />
+                  <button style={styles.photoRemove} onClick={() => handlePhotoRemove(url)} title="Quitar foto">
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* RIGHT: Agents */}
@@ -275,8 +325,23 @@ const styles = {
   },
   btnSuccess: { background: 'var(--green-dim)', borderColor: 'var(--green)', color: 'var(--green)' },
   uploadArea: {
-    marginTop: 12, padding: '14px', borderRadius: 8,
+    marginTop: 4, padding: '14px', borderRadius: 8,
     border: '1px dashed var(--border)', display: 'flex', alignItems: 'center', gap: 8,
+    cursor: 'pointer',
+  },
+  photoGrid: {
+    display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 8, marginTop: 12,
+  },
+  photoThumb: {
+    position: 'relative', borderRadius: 8, overflow: 'hidden',
+    border: '1px solid var(--border)', aspectRatio: '1', background: 'var(--bg)',
+  },
+  photoImg: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
+  photoRemove: {
+    position: 'absolute', top: 4, right: 4,
+    background: '#000000aa', border: 'none', borderRadius: '50%',
+    width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: '#fff', cursor: 'pointer',
   },
   agentBtns: { display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 },
   agentBtn: {
