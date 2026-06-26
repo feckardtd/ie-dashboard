@@ -1,30 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap');
 
 :root {
-  --bg: #0a0a0f;
-  --bg-card: #111118;
-  --bg-hover: #16161f;
-  --border: #1e1e2e;
-  --border-bright: #2a2a3e;
-  --accent: #6c63ff;
-  --accent-dim: #6c63ff22;
-  --accent-glow: #6c63ff44;
-  --gold: #f5c842;
-  --gold-dim: #f5c84222;
-  --green: #22c55e;
-  --green-dim: #22c55e22;
-  --red: #ef4444;
-  --text: #e8e8f0;
-  --text-muted: #6b6b8a;
-  --text-dim: #3a3a5c;
-  --font: 'Space Grotesk', sans-serif;
+  --bg: #c7d4d8;
+  --bg-card: #e4eaec;
+  --bg-hover: #d6e0e2;
+  --border: #b7c5ca;
+  --border-bright: #9fb0b6;
+  --accent: #c8632a;
+  --accent-dim: #c8632a22;
+  --accent-glow: #c8632a44;
+  --gold: #b8862e;
+  --gold-dim: #b8862e22;
+  --green: #3c6e63;
+  --green-dim: #3c6e6322;
+  --blue: #3a5a78;
+  --blue-dim: #3a5a7822;
+  --red: #d1453a;
+  --red-dim: #d1453a22;
+  --text: #1e2a2e;
+  --text-muted: #54666b;
+  --text-dim: #8a9aa0;
+  --font: 'Inter', sans-serif;
   --mono: 'JetBrains Mono', monospace;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(#b7c5ca 1px, transparent 1px),
+    linear-gradient(90deg, #b7c5ca 1px, transparent 1px);
+  background-size: 24px 24px;
   color: var(--text);
   font-family: var(--font);
   min-height: 100vh;
