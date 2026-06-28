@@ -44,6 +44,18 @@ const COOKIE_TTL_MS = 1000 * 60 * 30; // re-login cada 30 min por seguridad
 // mismo resultado en lugar de loguear de nuevo.
 let loginPromise = null;
 
+// Algunos backends (sobre todo detrás de un WAF/CDN) devuelven 404 en vez de
+// 403 para requests "no parecen venir de un navegador" — sin User-Agent,
+// sin Referer/Origin del propio sitio, etc. Mandamos headers de navegador
+// real para que la request se vea igual a la que hace la app web.
+const BROWSER_HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  Accept: 'application/json, text/plain, */*',
+  Referer: `${'https://my.camporganizer.app'}/explorer/dashboard`,
+  Origin: 'https://my.camporganizer.app',
+};
+
 function isConfigured() {
   return Boolean(process.env.CAMP_ORGANIZER_EMAIL && process.env.CAMP_ORGANIZER_PASSWORD);
 }
@@ -73,7 +85,7 @@ async function getSessionCookie() {
 async function doLogin() {
   const response = await fetch(`${BASE_URL}${LOGIN_PATH}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...BROWSER_HEADERS },
     body: JSON.stringify({
       email: process.env.CAMP_ORGANIZER_EMAIL,
       password: process.env.CAMP_ORGANIZER_PASSWORD,
@@ -115,10 +127,11 @@ async function fetchDaySchedule(dateISO) {
   if (!cookie) return { skipped: true };
 
   const url = `${BASE_URL}/api/events/sessions/${SESSION_ID}/schedule?view=day&date=${dateISO}`;
-  const response = await fetch(url, { headers: { Cookie: cookie } });
+  const response = await fetch(url, { headers: { Cookie: cookie, ...BROWSER_HEADERS } });
 
   if (!response.ok) {
-    throw new Error(`[camporganizer] fetchDaySchedule falló: HTTP ${response.status}`);
+    const body = await response.text().catch(() => '');
+    throw new Error(`[camporganizer] fetchDaySchedule falló: HTTP ${response.status}${body ? ` — ${body.slice(0, 200)}` : ''}`);
   }
   return response.json();
 }
@@ -129,10 +142,11 @@ async function fetchWeekSchedule(dateISO) {
   if (!cookie) return { skipped: true };
 
   const url = `${BASE_URL}/api/events/sessions/${SESSION_ID}/schedule?view=week&date=${dateISO}`;
-  const response = await fetch(url, { headers: { Cookie: cookie } });
+  const response = await fetch(url, { headers: { Cookie: cookie, ...BROWSER_HEADERS } });
 
   if (!response.ok) {
-    throw new Error(`[camporganizer] fetchWeekSchedule falló: HTTP ${response.status}`);
+    const body = await response.text().catch(() => '');
+    throw new Error(`[camporganizer] fetchWeekSchedule falló: HTTP ${response.status}${body ? ` — ${body.slice(0, 200)}` : ''}`);
   }
   return response.json();
 }
