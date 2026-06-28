@@ -82,3 +82,18 @@ export async function getReflections() {
     .order('date', { ascending: false });
   return { data, error };
 }
+
+// Helper: get the most recently synced CampOrganizer "day" schedule cache.
+// Populated by the backend cron (campOrganizerSync.js) ~6:30 AM daily.
+// Returns the raw row ({ date, view, payload, fetched_at }) so the caller
+// can compare `date` against "today" before trusting/displaying it.
+export async function getCampScheduleToday() {
+  const { data, error } = await supabase
+    .from('camp_schedule_cache')
+    .select('*')
+    .eq('view', 'day')
+    .order('fetched_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return { data, error };
+}

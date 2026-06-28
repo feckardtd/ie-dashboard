@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Users, Bot, MapPin, Calendar, Zap, Flame, ShieldCheck } from 'lucide-react';
+import { BookOpen, Users, Bot, MapPin, Calendar, Zap, Flame, ShieldCheck, Clock } from 'lucide-react';
 import { SUBJECTS, CLASSES } from '../data/schedule';
-import { getReflections } from '../lib/supabase';
+import { getReflections, getCampScheduleToday } from '../lib/supabase';
 import {
   WEEK_DAY_DATES,
   getDayProgress,
@@ -32,6 +32,36 @@ function getDaysUntilProgram() {
   const now = new Date();
   const diff = WEEK1_START - now;
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+// CampOrganizer's cached payload is keyed by calendar date in Europe/Madrid
+// (where the program actually happens), so "today" needs to be computed in
+// that timezone too — otherwise a UTC-based "today" can be off by a few
+// hours right around midnight and show/hide the wrong cached day.
+function getMadridDateStr(d = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(d);
+}
+
+// CampOrganizer event_type_snapshot.color values are Tailwind-style color
+// names (violet, sky, etc.) — map them to the actual hex used elsewhere in
+// this dashboard's palette so the real schedule visually matches the rest
+// of the UI instead of using raw CSS color names.
+const CAMP_TYPE_COLORS = {
+  violet: '#8b5cf6',
+  sky: '#0ea5e9',
+  green: '#22c55e',
+  orange: '#f97316',
+  amber: '#f5c842',
+  rose: '#f43f5e',
+  pink: '#ec4899',
+  red: '#ef4444',
+  blue: '#3b82f6',
+  teal: '#14b8a6',
+  gray: '#6b7280',
+};
+
+function campColorFor(name) {
+  return CAMP_TYPE_COLORS[name] || 'var(--accent)';
 }
 
 // Mapa de carga académica: cuenta de clases por día de la semana en curso.
@@ -103,6 +133,7 @@ function DayProgressRing({ percent }) {
 export default function Dashboard() {
   const [stats] = useState({ notes: 0, contacts: 0 });
   const [streak, setStreak] = useState(0);
+  const [campSchedule, setCampSchedule] = useState(null); // { date, fetchedAt, events: [] } | null | 'stale'
   const week = getCurrentWeek();
   const location = getCurrentLocation();
   const daysUntil = getDaysUntilProgram();
@@ -111,6 +142,24 @@ export default function Dashboard() {
   useEffect(() => {
     getReflections().then(({ data }) => {
       if (data) setStreak(computeStreak(data.map((r) => r.date)));
+    });
+  }, []);
+
+  useEffect(() => {
+    getCampScheduleToday().then(({ data, error }) => {
+      if (error || !data?.payload) return;
+      const todayStr = getMadridDateStr();
+      if (data.date !== todayStr) {
+        // El cache existe pero es de otro día (ej. el job de Railway todavía
+        // no corrió hoy) — lo marcamos "stale" en vez de mostrar datos viejos
+        // como si fueran de hoy.
+        setCampSchedule('stale');
+        return;
+      }
+      const events = (data.payload.events || [])
+        .filter((e) => e.visibility?.explorer && e.status !== 'canceled')
+        .sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+      setCampSchedule({ date: data.date, fetchedAt: data.fetched_at, events });
     });
   }, []);
 
@@ -255,6 +304,40 @@ export default function Dashboard() {
                   {happeningNow && <span style={styles.nowChip}>AHORA</span>}
                   <div style={styles.classArrow}>→</div>
                 </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* CampOrganizer real schedule (actividades, comidas, transporte) */}
+      <div style={styles.section}>
+        <h2 style={styles.sectionTitle}>
+          <Clock size={16} style={{ color: 'var(--accent)' }} />
+          Horario real de hoy · CampOrganizer
+        </h2>
+        {campSchedule === null ? (
+          <div style={styles.empty}>Cargando horario real…</div>
+        ) : campSchedule === 'stale' ? (
+          <div style={styles.empty}>Todavía no hay horario sincronizado para hoy (se actualiza ~6:30 AM)</div>
+        ) : campSchedule.events.length === 0 ? (
+          <div style={styles.empty}>No hay eventos para hoy en CampOrganizer</div>
+        ) : (
+          <div style={styles.classList}>
+            {campSchedule.events.map((ev) => {
+              const color = campColorFor(ev.event_type_snapshot?.color);
+              return (
+                <div key={ev._id} style={styles.classCard}>
+                  <div style={{ ...styles.classBar, background: color }} />
+                  <div style={styles.classInfo}>
+                    <p style={styles.className}>{ev.title}</p>
+                    <p style={styles.classSubject}>
+                      {ev.start_time_local}–{ev.end_time_local}
+                      {ev.location?.name ? ` · ${ev.location.name}` : ''}
+                    </p>
+                  </div>
+                  {ev.status === 'in_progress' && <span style={styles.nowChip}>AHORA</span>}
+                </div>
               );
             })}
           </div>
