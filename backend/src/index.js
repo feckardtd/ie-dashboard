@@ -9,6 +9,7 @@ const { checkUpcomingClasses } = require('./jobs/preClassPrep');
 const { runWeekendRecap } = require('./jobs/weekendRecap');
 const { runContactFollowup } = require('./jobs/contactFollowup');
 const { runNetworkingIcebreaker } = require('./jobs/networkingIcebreaker');
+const { runCampOrganizerSync } = require('./jobs/campOrganizerSync');
 
 const REQUIRED_ENV = [
   'DEEPSEEK_API_KEY',
@@ -76,6 +77,16 @@ app.get('/test/contacts', async (req, res) => {
   try {
     await runContactFollowup();
     res.json({ ok: true, note: 'Solo envía mensaje si hay contactos agregados en las últimas 24h.' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/test/camporganizer', async (req, res) => {
+  try {
+    const result = await runCampOrganizerSync();
+    res.json({ ok: true, result });
   } catch (e) {
     console.error(e);
     res.status(500).json({ ok: false, error: e.message });
@@ -153,4 +164,14 @@ cron.schedule(
   { timezone: TIMEZONE }
 );
 
-console.log('Cron jobs programados: Morning Intelligence (7:00), Night Deepdive (21:00), Pre-Class Prep (cada 5 min), Networking Icebreaker (12:30), Weekend Recap (domingo 18:00), Contact Follow-up (22:30).');
+// CampOrganizer Sync — todos los días 6:30 AM hora de España, antes de
+// Morning Intelligence, para tener el horario real cacheado.
+cron.schedule(
+  '30 6 * * *',
+  () => {
+    runCampOrganizerSync().catch((e) => console.error('[camporganizer-sync] error:', e.message));
+  },
+  { timezone: TIMEZONE }
+);
+
+console.log('Cron jobs programados: Morning Intelligence (7:00), Night Deepdive (21:00), Pre-Class Prep (cada 5 min), Networking Icebreaker (12:30), Weekend Recap (domingo 18:00), Contact Follow-up (22:30), CampOrganizer Sync (6:30).');
