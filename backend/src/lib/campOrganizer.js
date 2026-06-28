@@ -64,15 +64,24 @@ async function getSessionCookie() {
     throw new Error(`[camporganizer] login falló: HTTP ${response.status}`);
   }
 
-  const setCookie = response.headers.get('set-cookie');
-  if (!setCookie) {
+  // IMPORTANTE: la spec de Fetch prohíbe que Headers combine varios
+  // "Set-Cookie" en un solo string, así que response.headers.get('set-cookie')
+  // sólo devuelve uno (normalmente el primero) y se pierden el resto de
+  // cookies que CampOrganizer necesita (esto causaba un 404 silencioso en
+  // /schedule porque el login "funcionaba" pero la sesión llegaba
+  // incompleta). getSetCookie() (Node 18.14+/20+, undici) sí devuelve cada
+  // Set-Cookie por separado.
+  const setCookies = typeof response.headers.getSetCookie === 'function'
+    ? response.headers.getSetCookie()
+    : [response.headers.get('set-cookie')].filter(Boolean);
+
+  if (!setCookies.length) {
     throw new Error('[camporganizer] login OK pero no recibí set-cookie; revisar formato de respuesta');
   }
 
   // Nos quedamos solo con el par nombre=valor de cada cookie (sin atributos
   // Path/HttpOnly/etc.) para reenviarla como header Cookie.
-  cachedCookie = setCookie
-    .split(/,(?=[^;]+?=)/) // separa cookies múltiples en un solo header set-cookie
+  cachedCookie = setCookies
     .map((c) => c.split(';')[0].trim())
     .join('; ');
   cachedCookieExpiresAt = Date.now() + COOKIE_TTL_MS;
