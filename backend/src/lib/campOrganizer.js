@@ -54,6 +54,13 @@ const BROWSER_HEADERS = {
   Accept: 'application/json, text/plain, */*',
   Referer: `${'https://my.camporganizer.app'}/explorer/dashboard`,
   Origin: 'https://my.camporganizer.app',
+  // Headers propios de la app (capturados interceptando window.fetch en
+  // vivo): sin estos, la API responde 404 "Not Found" aunque la cookie de
+  // sesión sea válida — parece usarlos para identificar el cliente
+  // (explorer_web) y el rol del actor (child = participante) y resolver el
+  // contexto correcto del recurso.
+  app: 'explorer_web',
+  'x-actor-role': 'child',
 };
 
 function isConfigured() {
