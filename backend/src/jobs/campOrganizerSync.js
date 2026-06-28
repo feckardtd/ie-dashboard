@@ -41,12 +41,16 @@ async function runCampOrganizerSync() {
   const today = DateTime.now().setZone(TIMEZONE).toFormat('yyyy-MM-dd');
 
   try {
-    const [dayData, weekData] = await Promise.all([
-      fetchDaySchedule(today),
-      fetchWeekSchedule(today),
-    ]);
-
+    // Secuencial, no Promise.all: CampOrganizer parece rechazar (404) una de
+    // las dos llamadas cuando llegan casi simultáneas desde la misma sesión
+    // (visto en pruebas: día y semana fallaban alternadamente con el mismo
+    // patrón). Una pausa corta entre ambas evita el problema.
+    const dayData = await fetchDaySchedule(today);
     if (!dayData?.skipped) await upsertScheduleCache(today, 'day', dayData);
+
+    await new Promise((r) => setTimeout(r, 800));
+
+    const weekData = await fetchWeekSchedule(today);
     if (!weekData?.skipped) await upsertScheduleCache(today, 'week', weekData);
 
     console.log('[camporganizer-sync] horario sincronizado para', today);
