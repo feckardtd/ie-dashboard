@@ -35,6 +35,15 @@ let cachedCookie = null;
 let cachedCookieExpiresAt = 0;
 const COOKIE_TTL_MS = 1000 * 60 * 30; // re-login cada 30 min por seguridad
 
+// fetchDaySchedule y fetchWeekSchedule corren en paralelo (Promise.all) y
+// ambos llaman a getSessionCookie(). Sin esto, si no hay cookie cacheada
+// todavía, dispararían DOS logins casi simultáneos — y CampOrganizer parece
+// invalidar la sesión anterior cuando entra una nueva, lo que rompía uno de
+// los dos fetches con 404 aunque el login "funcionara". Este lock asegura
+// que solo haya un login en vuelo a la vez; el segundo llamador espera el
+// mismo resultado en lugar de loguear de nuevo.
+let loginPromise = null;
+
 function isConfigured() {
   return Boolean(process.env.CAMP_ORGANIZER_EMAIL && process.env.CAMP_ORGANIZER_PASSWORD);
 }
@@ -51,6 +60,17 @@ async function getSessionCookie() {
     return cachedCookie;
   }
 
+  if (loginPromise) {
+    return loginPromise;
+  }
+
+  loginPromise = doLogin().finally(() => {
+    loginPromise = null;
+  });
+  return loginPromise;
+}
+
+async function doLogin() {
   const response = await fetch(`${BASE_URL}${LOGIN_PATH}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
