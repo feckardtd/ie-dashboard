@@ -10,6 +10,7 @@ const { runWeekendRecap } = require('./jobs/weekendRecap');
 const { runContactFollowup } = require('./jobs/contactFollowup');
 const { runNetworkingIcebreaker } = require('./jobs/networkingIcebreaker');
 const { runCampOrganizerSync } = require('./jobs/campOrganizerSync');
+const { checkActivityReminders } = require('./jobs/activityReminder');
 
 const REQUIRED_ENV = [
   'DEEPSEEK_API_KEY',
@@ -103,6 +104,16 @@ app.get('/test/networking', async (req, res) => {
   }
 });
 
+app.get('/test/activityreminder', async (req, res) => {
+  try {
+    await checkActivityReminders();
+    res.json({ ok: true, note: 'Revisó todas las actividades de hoy; solo envía si alguna cae en la ventana de 9-10 min antes.' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`ie-dashboard-bot escuchando en puerto ${PORT} (zona horaria ${TIMEZONE})`);
 });
@@ -174,4 +185,16 @@ cron.schedule(
   { timezone: TIMEZONE }
 );
 
-console.log('Cron jobs programados: Morning Intelligence (7:00), Night Deepdive (21:00), Pre-Class Prep (cada 5 min), Networking Icebreaker (12:30), Weekend Recap (domingo 18:00), Contact Follow-up (22:30), CampOrganizer Sync (6:30).');
+// Activity Reminder — checa cada minuto si alguna actividad (clase o
+// evento de CampOrganizer) empieza en ~10 min. Convive con Pre-Class Prep
+// (30 min antes, con contexto generado por IA, solo para las 28 clases
+// formales) — este es un aviso simple y cubre TODO lo programado del día.
+cron.schedule(
+  '* * * * *',
+  () => {
+    checkActivityReminders().catch((e) => console.error('[activity-reminder] error:', e.message));
+  },
+  { timezone: TIMEZONE }
+);
+
+console.log('Cron jobs programados: Morning Intelligence (7:00), Night Deepdive (21:00), Pre-Class Prep (cada 5 min), Networking Icebreaker (12:30), Weekend Recap (domingo 18:00), Contact Follow-up (22:30), CampOrganizer Sync (6:30), Activity Reminder (cada minuto).');

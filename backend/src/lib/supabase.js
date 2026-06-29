@@ -62,6 +62,46 @@ async function markClassNotified(classId) {
   if (error) console.error('[supabase] error guardando preclass_notification:', error.message);
 }
 
+// Activity Reminder (10 min antes de CUALQUIER actividad: clases formales +
+// eventos de CampOrganizer) dedup — mismo patrón que preclass_notifications,
+// pero con un id genérico con prefijo ('camp:<eventId>' o 'class:<classId>')
+// para no pisar el dedup de Pre-Class Prep, que es un aviso distinto (30 min
+// antes, con contexto generado por IA) y convive con este.
+async function getNotifiedActivityIds() {
+  const { data, error } = await supabase.from('activity_reminders').select('activity_id');
+  if (error) {
+    console.error('[supabase] error leyendo activity_reminders:', error.message);
+    return new Set();
+  }
+  return new Set((data || []).map((r) => r.activity_id));
+}
+
+async function markActivityNotified(activityId) {
+  const { error } = await supabase
+    .from('activity_reminders')
+    .upsert({ activity_id: activityId, notified_at: new Date().toISOString() });
+  if (error) console.error('[supabase] error guardando activity_reminder:', error.message);
+}
+
+// Trae los eventos de hoy del cache de CampOrganizer (camp_schedule_cache,
+// view='day'), o null si no hay fila para hoy todavía (el sync corre una vez
+// por día ~6:30 AM) o si falló. null le indica al caller que use el fallback
+// (CLASSES de schedule.js) en vez de "hoy no hay nada programado".
+async function getCampScheduleCacheToday(todayStr) {
+  const { data, error } = await supabase
+    .from('camp_schedule_cache')
+    .select('*')
+    .eq('view', 'day')
+    .eq('date', todayStr)
+    .maybeSingle();
+  if (error) {
+    console.error('[supabase] error leyendo camp_schedule_cache:', error.message);
+    return null;
+  }
+  if (!data || data.date !== todayStr || !data.payload?.events) return null;
+  return data.payload.events;
+}
+
 // All reflections saved in [startISO, endISO) — used by Weekend Recap to
 // pull the week's daily reflections (mirrors getNotesUpdatedBetween).
 async function getReflectionsBetween(startISO, endISO) {
@@ -94,6 +134,9 @@ module.exports = {
   getNotesUpdatedBetween,
   getNotifiedClassIds,
   markClassNotified,
+  getNotifiedActivityIds,
+  markActivityNotified,
+  getCampScheduleCacheToday,
   getReflectionsBetween,
   getContactsCreatedBetween,
 };
