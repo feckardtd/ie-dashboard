@@ -6,11 +6,11 @@ export default function Fotos() {
   const [photos, setPhotos] = useState([]);
   const [activeCategory, setActiveCategory] = useState('Todas');
   const [showUpload, setShowUpload] = useState(false);
-  const [pendingFile, setPendingFile] = useState(null);
-  const [pendingPreview, setPendingPreview] = useState(null);
+  const [pendingFiles, setPendingFiles] = useState([]); // [{file, preview}]
   const [category, setCategory] = useState('');
   const [caption, setCaption] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
   const [lightbox, setLightbox] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -25,28 +25,35 @@ export default function Fotos() {
     : photos.filter(p => p.category === activeCategory);
 
   const handleFilePick = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPendingFile(file);
-    setPendingPreview(URL.createObjectURL(file));
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setPendingFiles(files.map(file => ({ file, preview: URL.createObjectURL(file) })));
     setCategory('');
     setCaption('');
     setShowUpload(true);
   };
 
   const handleUpload = async () => {
-    if (!pendingFile) return;
+    if (!pendingFiles.length) return;
     setUploading(true);
+    setUploadProgress({ done: 0, total: pendingFiles.length });
     const finalCategory = category.trim() || 'Sin categoría';
-    const { url, path, error: upErr } = await uploadGalleryPhoto(finalCategory, pendingFile);
-    if (!upErr && url) {
-      const { data } = await savePhoto({ url, path, category: finalCategory, caption });
-      if (data?.[0]) setPhotos(prev => [data[0], ...prev]);
+    const newRows = [];
+    // Secuencial (no concurrente) para no saturar Supabase Storage y poder
+    // mostrar progreso real "subiendo X de N".
+    for (const { file } of pendingFiles) {
+      const { url, path, error: upErr } = await uploadGalleryPhoto(finalCategory, file);
+      if (!upErr && url) {
+        const { data } = await savePhoto({ url, path, category: finalCategory, caption });
+        if (data?.[0]) newRows.push(data[0]);
+      }
+      setUploadProgress(p => ({ ...p, done: p.done + 1 }));
     }
+    if (newRows.length) setPhotos(prev => [...newRows, ...prev]);
     setUploading(false);
     setShowUpload(false);
-    setPendingFile(null);
-    setPendingPreview(null);
+    setPendingFiles([]);
+    setUploadProgress({ done: 0, total: 0 });
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -70,6 +77,7 @@ export default function Fotos() {
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          multiple
           style={{ display: 'none' }}
           onChange={handleFilePick}
         />
@@ -120,20 +128,26 @@ export default function Fotos() {
         <div style={styles.overlay} onClick={e => e.target === e.currentTarget && !uploading && setShowUpload(false)}>
           <div className="modal-card" style={styles.modal}>
             <div style={styles.modalHeader}>
-              <h2 style={styles.modalTitle}>Subir foto</h2>
+              <h2 style={styles.modalTitle}>
+                Subir {pendingFiles.length > 1 ? `${pendingFiles.length} fotos` : 'foto'}
+              </h2>
               <button style={styles.closeBtn} onClick={() => setShowUpload(false)} disabled={uploading}>
                 <X size={16} />
               </button>
             </div>
 
-            {pendingPreview && (
-              <img src={pendingPreview} alt="preview" style={styles.previewImg} />
+            {pendingFiles.length > 0 && (
+              <div style={styles.previewGrid}>
+                {pendingFiles.map((p, i) => (
+                  <img key={i} src={p.preview} alt={`preview-${i}`} style={styles.previewThumb} />
+                ))}
+              </div>
             )}
 
             <div style={styles.formGroup}>
               <label style={styles.label}>
                 <FolderPlus size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                Categoría
+                Categoría {pendingFiles.length > 1 ? '(se aplica a todas)' : ''}
               </label>
               <input
                 style={styles.input}
@@ -153,12 +167,14 @@ export default function Fotos() {
                 style={styles.input}
                 value={caption}
                 onChange={e => setCaption(e.target.value)}
-                placeholder="¿Qué es esta foto?"
+                placeholder={pendingFiles.length > 1 ? 'Se aplica a todas (opcional)' : '¿Qué es esta foto?'}
               />
             </div>
 
             <button style={styles.saveBtn} onClick={handleUpload} disabled={uploading}>
-              {uploading ? 'Subiendo...' : 'Guardar foto'}
+              {uploading
+                ? `Subiendo ${uploadProgress.done}/${uploadProgress.total}...`
+                : `Guardar ${pendingFiles.length > 1 ? `${pendingFiles.length} fotos` : 'foto'}`}
             </button>
           </div>
         </div>
@@ -239,8 +255,12 @@ const styles = {
   modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   modalTitle: { fontSize: 20, fontWeight: 700 },
   closeBtn: { background: 'none', border: 'none', color: 'var(--text-muted)', padding: 4 },
-  previewImg: {
-    width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 10, marginBottom: 18,
+  previewGrid: {
+    display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 18,
+    maxHeight: 200, overflowY: 'auto',
+  },
+  previewThumb: {
+    width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 8,
   },
   formGroup: { display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 },
   label: { fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' },
