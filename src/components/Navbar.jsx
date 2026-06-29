@@ -1,11 +1,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calendar, BookOpen, Users, Bot, BookMarked, User, Plane } from 'lucide-react';
+import { LayoutDashboard, Calendar, BookOpen, Users, Bot, BookMarked, User, Plane, Tent } from 'lucide-react';
 
 const NAV = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/schedule', icon: Calendar, label: 'Schedule' },
   { to: '/clases', icon: BookOpen, label: 'Clases' },
+  { to: '/camporganizer', icon: Tent, label: 'CampOrganizer' },
   { to: '/contactos', icon: Users, label: 'Contactos' },
   { to: '/agentes', icon: Bot, label: 'Agentes' },
   { to: '/reflexiones', icon: BookMarked, label: 'Reflexiones' },

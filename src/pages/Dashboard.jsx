@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Users, Bot, MapPin, Calendar, Zap, Flame, ShieldCheck, Clock } from 'lucide-react';
+import { BookOpen, Users, Bot, MapPin, Calendar, Zap, Flame, ShieldCheck, Clock, Cloud } from 'lucide-react';
 import { SUBJECTS, CLASSES } from '../data/schedule';
 import { getReflections, getCampScheduleToday } from '../lib/supabase';
 import {
@@ -134,6 +134,7 @@ export default function Dashboard() {
   const [stats] = useState({ notes: 0, contacts: 0 });
   const [streak, setStreak] = useState(0);
   const [campSchedule, setCampSchedule] = useState(null); // { date, fetchedAt, events: [] } | null | 'stale'
+  const [campWeather, setCampWeather] = useState(null); // { weather, session } | null | 'stale'
   const week = getCurrentWeek();
   const location = getCurrentLocation();
   const daysUntil = getDaysUntilProgram();
@@ -154,12 +155,20 @@ export default function Dashboard() {
         // no corrió hoy) — lo marcamos "stale" en vez de mostrar datos viejos
         // como si fueran de hoy.
         setCampSchedule('stale');
+        setCampWeather('stale');
         return;
       }
       const events = (data.payload.events || [])
         .filter((e) => e.visibility?.explorer && e.status !== 'canceled')
         .sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
       setCampSchedule({ date: data.date, fetchedAt: data.fetched_at, events });
+
+      const day = data.payload.days?.[0];
+      if (day?.weather) {
+        setCampWeather({ weather: day.weather, session: data.payload.session, dayTitle: day.title });
+      } else {
+        setCampWeather('stale');
+      }
     });
   }, []);
 
@@ -251,6 +260,42 @@ export default function Dashboard() {
           <span><span style={{ ...styles.legendDot, background: 'var(--green)' }} /> Segovia (semana 1)</span>
           <span><span style={{ ...styles.legendDot, background: 'var(--blue)' }} /> Madrid (semana 2)</span>
         </div>
+      </div>
+
+      {/* Clima de hoy (CampOrganizer) */}
+      <div style={styles.section}>
+        <h2 style={styles.sectionTitle}>
+          <Cloud size={16} style={{ color: 'var(--accent)' }} />
+          Clima de hoy
+        </h2>
+        {campWeather === null ? (
+          <div style={styles.empty}>Cargando clima…</div>
+        ) : campWeather === 'stale' ? (
+          <div style={styles.empty}>Todavía no hay clima sincronizado para hoy</div>
+        ) : (
+          <div style={styles.weatherCard}>
+            <img
+              src={`https://my.camporganizer.app/icons/weather/${campWeather.weather.icon}.svg`}
+              alt={campWeather.weather.condition || 'clima'}
+              width={48}
+              height={48}
+              style={styles.weatherIcon}
+            />
+            <div style={styles.weatherMain}>
+              <p style={styles.weatherTemp}>{Math.round(campWeather.weather.temp_day)}°C</p>
+              <p style={styles.weatherDesc}>
+                {campWeather.weather.description || campWeather.weather.condition || campWeather.weather.summary}
+              </p>
+            </div>
+            <div style={styles.weatherDetails}>
+              <span>Mín {Math.round(campWeather.weather.temp_min)}° · Máx {Math.round(campWeather.weather.temp_max)}°</span>
+              <span>Humedad {campWeather.weather.humidity}%</span>
+              {campWeather.weather.wind_speed != null && (
+                <span>Viento {Math.round(campWeather.weather.wind_speed)} km/h</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
@@ -450,6 +495,19 @@ const styles = {
   timelineDay: { fontSize: 11, fontFamily: 'var(--mono)', fontWeight: 500 },
   timelineLegend: { display: 'flex', gap: 16, marginTop: 10, fontSize: 11, color: 'var(--text-muted)' },
   legendDot: { display: 'inline-block', width: 7, height: 7, borderRadius: 2, marginRight: 5 },
+  weatherCard: {
+    display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+    background: 'var(--bg-card)', border: '1px solid var(--border)',
+    borderRadius: 10, padding: '16px 20px',
+  },
+  weatherIcon: { flexShrink: 0 },
+  weatherMain: { display: 'flex', flexDirection: 'column', gap: 2 },
+  weatherTemp: { fontSize: 24, fontWeight: 600, fontFamily: 'var(--mono)' },
+  weatherDesc: { fontSize: 12, color: 'var(--text-muted)', textTransform: 'capitalize' },
+  weatherDetails: {
+    display: 'flex', flexDirection: 'column', gap: 3, marginLeft: 'auto',
+    fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--mono)',
+  },
   conflictBadge: {
     display: 'flex', alignItems: 'center', gap: 6,
     fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--text-muted)',

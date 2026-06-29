@@ -9,6 +9,7 @@ import Agentes from './pages/Agentes';
 import Reflexiones from './pages/Reflexiones';
 import MiPerfil from './pages/MiPerfil';
 import Checklist from './pages/Checklist';
+import CampOrganizer from './pages/CampOrganizer';
 import './index.css';
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="/reflexiones" element={<Reflexiones />} />
             <Route path="/perfil" element={<MiPerfil />} />
             <Route path="/checklist" element={<Checklist />} />
+            <Route path="/camporganizer" element={<CampOrganizer />} />
           </Routes>
         </main>
       </div>
