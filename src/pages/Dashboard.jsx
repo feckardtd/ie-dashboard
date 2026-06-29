@@ -8,8 +8,11 @@ import { SUBJECTS, CLASSES } from '../data/schedule';
 import { getReflections, getCampScheduleToday } from '../lib/supabase';
 import {
   WEEK_DAY_DATES,
-  getDayProgress,
-  isClassNow,
+  getClassDateTime,
+  getClassEndDateTime,
+  getRealClassRange,
+  getDayProgressFromRanges,
+  isNowInRange,
   findScheduleConflicts,
   computeStreak,
 } from '../lib/scheduleUtils';
@@ -103,8 +106,10 @@ function WeekLoadMap({ week }) {
 }
 
 // Anillo de progreso del día: qué porcentaje del bloque de clases de hoy ya
-// pasó. Usa horarios estimados (ver scheduleUtils.js) — honesto sobre eso
-// si alguna vez se confirma el horario real.
+// pasó. Usa los horarios reales de CampOrganizer cuando están disponibles
+// (matcheados por número de sesión, ver getRealClassRange en
+// scheduleUtils.js), y los horarios ESTIMADOS de 9am como respaldo si
+// todavía no hay cache de hoy o no hay bloque que matchee.
 function DayProgressRing({ percent }) {
   if (percent === null) return null;
   const r = 19;
@@ -179,7 +184,18 @@ export default function Dashboard() {
   const todayClasses = week
     ? CLASSES.filter(c => c.week === week && c.day === todayDay)
     : [];
-  const dayProgress = getDayProgress(todayClasses, now);
+  // Prefer real CampOrganizer times for today's classes (matched by session
+  // number — see getRealClassRange), falling back to the estimated 9am-block
+  // times only for classes CampOrganizer didn't have a matching block for.
+  const realCampEvents = campSchedule && campSchedule !== 'stale' ? campSchedule.events : null;
+  const todayRanges = todayClasses
+    .map((c) => getRealClassRange(c, realCampEvents) || (
+      getClassDateTime(c) && getClassEndDateTime(c)
+        ? { start: getClassDateTime(c), end: getClassEndDateTime(c) }
+        : null
+    ))
+    .filter(Boolean);
+  const dayProgress = getDayProgressFromRanges(todayRanges, now);
   const conflicts = findScheduleConflicts(CLASSES.filter(c => c.week === week));
 
   const STAT_CARDS = [
@@ -337,7 +353,12 @@ export default function Dashboard() {
           <div style={styles.classList}>
             {todayClasses.map(cls => {
               const subject = SUBJECTS.find(s => s.id === cls.subjectId);
-              const happeningNow = isClassNow(cls, now);
+              const range = getRealClassRange(cls, realCampEvents) || (
+                getClassDateTime(cls) && getClassEndDateTime(cls)
+                  ? { start: getClassDateTime(cls), end: getClassEndDateTime(cls) }
+                  : null
+              );
+              const happeningNow = isNowInRange(range, now);
               return (
                 <Link to={`/clases/${cls.id}`} key={cls.id} style={styles.classCard}>
                   <div style={{ ...styles.classBar, background: subject?.color }} />

@@ -74,6 +74,43 @@ export function isClassNow(cls, now = new Date()) {
   return now >= start && now <= end;
 }
 
+// CampOrganizer labels each academic block "... S<n>" (room/group letter
+// varies, e.g. "(Room 342 - A) Sustainability & Social Impact S2"), where
+// <n> matches `cls.session`. Real start/end times beat the ESTIMATED ones
+// above whenever today's real schedule is available — same matching
+// strategy as backend/src/jobs/preClassPrep.js, kept in sync.
+const SESSION_SUFFIX_RE = /\bS(\d)\b/i;
+
+export function getRealClassRange(cls, campEvents) {
+  if (!campEvents || !campEvents.length) return null;
+  const matches = campEvents.filter((e) => {
+    if (e.status === 'canceled' || !e.start_at || !e.end_at) return false;
+    const m = e.title?.match(SESSION_SUFFIX_RE);
+    return m && Number(m[1]) === cls.session;
+  });
+  if (!matches.length) return null;
+  const earliestStart = matches.reduce((a, b) => (a.start_at < b.start_at ? a : b)).start_at;
+  const latestEnd = matches.reduce((a, b) => (a.end_at > b.end_at ? a : b)).end_at;
+  return { start: new Date(earliestStart), end: new Date(latestEnd) };
+}
+
+// Like getDayProgress, but works off explicit {start, end} ranges instead
+// of CLASSES objects — lets the caller mix real CampOrganizer ranges with
+// estimated fallback ranges per class.
+export function getDayProgressFromRanges(ranges, now = new Date()) {
+  if (!ranges.length) return null;
+  const dayStart = new Date(Math.min(...ranges.map((r) => r.start)));
+  const dayEnd = new Date(Math.max(...ranges.map((r) => r.end)));
+  if (now <= dayStart) return 0;
+  if (now >= dayEnd) return 100;
+  return Math.round(((now - dayStart) / (dayEnd - dayStart)) * 100);
+}
+
+export function isNowInRange(range, now = new Date()) {
+  if (!range?.start || !range?.end) return false;
+  return now >= range.start && now <= range.end;
+}
+
 // Cuenta de clases por día para la semana dada — alimenta el mapa de
 // carga académica.
 export function getWeekLoad(week) {

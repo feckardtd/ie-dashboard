@@ -1,5 +1,10 @@
 const { DateTime } = require('luxon');
-const { getNotesForClasses, getNotifiedClassIds, markClassNotified } = require('../lib/supabase');
+const {
+  getNotesForClasses,
+  getNotifiedClassIds,
+  markClassNotified,
+  getCampScheduleCacheToday,
+} = require('../lib/supabase');
 const {
   preClassPrep: generatePrep,
   hackathonPrep: generateHackathonPrep,
@@ -16,13 +21,47 @@ const { CLASSES, getSubject, getClassStart, TIMEZONE } = require('../data/schedu
 const MINUTES_BEFORE = 30;
 const WINDOW_MINUTES = 5; // tolerance: fires once per checker tick (every 5 min)
 
+// CampOrganizer labels each academic block in its title as "... S<n>" where
+// <n> is the session number within the day (e.g. "(Room 342 - A)
+// Sustainability & Social Impact S2") — the room/group letter (A/B/C)
+// varies, but all variants of the same session share the same start time,
+// and that session number lines up 1:1 with `cls.session` in schedule.js.
+// So instead of matching class names (which don't resemble CampOrganizer's
+// generic per-block titles), we match on session number alone — far more
+// reliable than fuzzy text matching, and avoids ever needing to know which
+// room/group Fede is actually in.
+const SESSION_SUFFIX_RE = /\bS(\d)\b/i;
+
+function getRealStartFromCamp(cls, campEvents, todayStr) {
+  if (!campEvents || !campEvents.length) return null;
+  // Only trust the session-number match for classes actually scheduled
+  // today — otherwise a coincidental "S<n>" match in today's cache could
+  // get attributed to a class that's really scheduled a different day.
+  const estimated = getClassStart(cls);
+  if (!estimated || estimated.toISODate() !== todayStr) return null;
+
+  const matches = campEvents.filter((e) => {
+    if (e.status === 'canceled' || !e.start_at) return false;
+    const m = e.title?.match(SESSION_SUFFIX_RE);
+    return m && Number(m[1]) === cls.session;
+  });
+  if (!matches.length) return null;
+  const earliest = matches.reduce((a, b) => (a.start_at < b.start_at ? a : b));
+  return DateTime.fromISO(earliest.start_at).setZone(TIMEZONE);
+}
+
 async function checkUpcomingClasses() {
   const now = DateTime.now().setZone(TIMEZONE);
+  const todayStr = now.toISODate();
   const notified = await getNotifiedClassIds();
+  const campEvents = await getCampScheduleCacheToday(todayStr);
 
   for (const cls of CLASSES) {
     if (notified.has(cls.id)) continue;
-    const start = getClassStart(cls);
+    // Prefer the real CampOrganizer time for today's classes; fall back to
+    // the estimated schedule.js time if there's no cache yet or no matching
+    // session block was found (e.g. non-academic days, or before sync runs).
+    const start = getRealStartFromCamp(cls, campEvents, todayStr) || getClassStart(cls);
     if (!start) continue;
 
     const minutesUntil = start.diff(now, 'minutes').minutes;
