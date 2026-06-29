@@ -83,6 +83,47 @@ export async function getReflections() {
   return { data, error };
 }
 
+// Helper: subir una foto a la galería (bucket público "gallery-photos"),
+// organizada por categoría libre (la carpeta dentro del bucket es la
+// categoría, así queda prolijo en Supabase Storage también).
+export async function uploadGalleryPhoto(category, file) {
+  const ext = file.name.split('.').pop() || 'jpg';
+  const safeCategory = (category || 'Sin categoría').trim().replace(/[\\/]/g, '-') || 'Sin categoría';
+  const path = `${safeCategory}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error: uploadError } = await supabase.storage.from('gallery-photos').upload(path, file, {
+    cacheControl: '3600',
+    upsert: false,
+  });
+  if (uploadError) return { url: null, path: null, error: uploadError };
+  const { data } = supabase.storage.from('gallery-photos').getPublicUrl(path);
+  return { url: data.publicUrl, path, error: null };
+}
+
+// Helper: guardar el registro de una foto en la tabla `photos`.
+export async function savePhoto({ url, path, category, caption }) {
+  const { data, error } = await supabase
+    .from('photos')
+    .insert({ url, path, category: category || 'Sin categoría', caption: caption || '' })
+    .select();
+  return { data, error };
+}
+
+// Helper: get all photos, newest first.
+export async function getPhotos() {
+  const { data, error } = await supabase
+    .from('photos')
+    .select('*')
+    .order('created_at', { ascending: false });
+  return { data, error };
+}
+
+// Helper: borrar una foto (storage + fila en la tabla).
+export async function deletePhoto(id, path) {
+  const { error: storageError } = await supabase.storage.from('gallery-photos').remove([path]);
+  const { error: dbError } = await supabase.from('photos').delete().eq('id', id);
+  return { error: storageError || dbError };
+}
+
 // Helper: get the most recently synced CampOrganizer "day" schedule cache.
 // Populated by the backend cron (campOrganizerSync.js) ~6:30 AM daily.
 // Returns the raw row ({ date, view, payload, fetched_at }) so the caller
