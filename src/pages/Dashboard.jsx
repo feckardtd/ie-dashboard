@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Users, Bot, MapPin, Calendar, Zap, Flame, ShieldCheck, Clock, Cloud } from 'lucide-react';
+import {
+  BookOpen, Users, Bot, MapPin, Calendar, Zap, Flame, ShieldCheck, Clock,
+  Sun, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning,
+} from 'lucide-react';
 import { SUBJECTS, CLASSES } from '../data/schedule';
 import { getReflections, getCampScheduleToday } from '../lib/supabase';
 import {
@@ -10,23 +13,15 @@ import {
   findScheduleConflicts,
   computeStreak,
 } from '../lib/scheduleUtils';
+import {
+  WEEK1_START,
+  getCurrentWeek,
+  getCurrentLocation,
+  fetchCurrentWeather,
+  getWeatherInfo,
+} from '../lib/weather';
 
-const WEEK1_START = new Date('2026-06-28');
-const WEEK2_START = new Date('2026-07-05');
-
-function getCurrentWeek() {
-  const now = new Date();
-  if (now >= WEEK1_START && now < WEEK2_START) return 1;
-  if (now >= WEEK2_START) return 2;
-  return null;
-}
-
-function getCurrentLocation() {
-  const w = getCurrentWeek();
-  if (w === 1) return 'Segovia';
-  if (w === 2) return 'Madrid';
-  return null;
-}
+const WEATHER_ICONS = { Sun, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning };
 
 function getDaysUntilProgram() {
   const now = new Date();
@@ -134,7 +129,7 @@ export default function Dashboard() {
   const [stats] = useState({ notes: 0, contacts: 0 });
   const [streak, setStreak] = useState(0);
   const [campSchedule, setCampSchedule] = useState(null); // { date, fetchedAt, events: [] } | null | 'stale'
-  const [campWeather, setCampWeather] = useState(null); // { weather, session } | null | 'stale'
+  const [liveWeather, setLiveWeather] = useState(null); // { tempC, feelsLike, humidity, windKmh, code, location } | null | 'error'
   const week = getCurrentWeek();
   const location = getCurrentLocation();
   const daysUntil = getDaysUntilProgram();
@@ -155,21 +150,29 @@ export default function Dashboard() {
         // no corrió hoy) — lo marcamos "stale" en vez de mostrar datos viejos
         // como si fueran de hoy.
         setCampSchedule('stale');
-        setCampWeather('stale');
         return;
       }
       const events = (data.payload.events || [])
         .filter((e) => e.visibility?.explorer && e.status !== 'canceled')
         .sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
       setCampSchedule({ date: data.date, fetchedAt: data.fetched_at, events });
-
-      const day = data.payload.days?.[0];
-      if (day?.weather) {
-        setCampWeather({ weather: day.weather, session: data.payload.session, dayTitle: day.title });
-      } else {
-        setCampWeather('stale');
-      }
     });
+  }, []);
+
+  // Clima en tiempo real (Open-Meteo, no el pronóstico cacheado de
+  // CampOrganizer) — se refresca solo cada 10 minutos para no golpear la
+  // API de más, pero siempre refleja la condición actual, no un snapshot
+  // de la mañana.
+  useEffect(() => {
+    let cancelled = false;
+    function load() {
+      fetchCurrentWeather(getCurrentLocation())
+        .then((w) => { if (!cancelled) setLiveWeather(w); })
+        .catch(() => { if (!cancelled) setLiveWeather('error'); });
+    }
+    load();
+    const interval = setInterval(load, 10 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
   const todayDay = now.toLocaleDateString('en-US', { weekday: 'long' });
@@ -262,39 +265,35 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Clima de hoy (CampOrganizer) */}
+      {/* Clima en tiempo real */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>
           <Cloud size={16} style={{ color: 'var(--accent)' }} />
-          Clima de hoy
+          Clima ahora · {getCurrentLocation()}
         </h2>
-        {campWeather === null ? (
+        {liveWeather === null ? (
           <div style={styles.empty}>Cargando clima…</div>
-        ) : campWeather === 'stale' ? (
-          <div style={styles.empty}>Todavía no hay clima sincronizado para hoy</div>
+        ) : liveWeather === 'error' ? (
+          <div style={styles.empty}>No se pudo cargar el clima en este momento</div>
         ) : (
-          <div style={styles.weatherCard}>
-            <img
-              src={`https://my.camporganizer.app/icons/weather/${campWeather.weather.icon}.svg`}
-              alt={campWeather.weather.condition || 'clima'}
-              width={48}
-              height={48}
-              style={styles.weatherIcon}
-            />
-            <div style={styles.weatherMain}>
-              <p style={styles.weatherTemp}>{Math.round(campWeather.weather.temp_day)}°C</p>
-              <p style={styles.weatherDesc}>
-                {campWeather.weather.description || campWeather.weather.condition || campWeather.weather.summary}
-              </p>
-            </div>
-            <div style={styles.weatherDetails}>
-              <span>Mín {Math.round(campWeather.weather.temp_min)}° · Máx {Math.round(campWeather.weather.temp_max)}°</span>
-              <span>Humedad {campWeather.weather.humidity}%</span>
-              {campWeather.weather.wind_speed != null && (
-                <span>Viento {Math.round(campWeather.weather.wind_speed)} km/h</span>
-              )}
-            </div>
-          </div>
+          (() => {
+            const info = getWeatherInfo(liveWeather.code);
+            const Icon = WEATHER_ICONS[info.icon] || Cloud;
+            return (
+              <div style={styles.weatherCard}>
+                <Icon size={40} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                <div style={styles.weatherMain}>
+                  <p style={styles.weatherTemp}>{Math.round(liveWeather.tempC)}°C</p>
+                  <p style={styles.weatherDesc}>{info.label}</p>
+                </div>
+                <div style={styles.weatherDetails}>
+                  <span>Sensación {Math.round(liveWeather.feelsLike)}°</span>
+                  <span>Humedad {liveWeather.humidity}%</span>
+                  <span>Viento {Math.round(liveWeather.windKmh)} km/h</span>
+                </div>
+              </div>
+            );
+          })()
         )}
       </div>
 

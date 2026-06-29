@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Tent, Cloud, CalendarDays, MapPin, Clock } from 'lucide-react';
+import {
+  Tent, CalendarDays, MapPin, Clock,
+  Sun, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning,
+} from 'lucide-react';
 import { getCampScheduleToday } from '../lib/supabase';
+import { getCurrentLocation, fetchCurrentWeather, getWeatherInfo } from '../lib/weather';
+
+const WEATHER_ICONS = { Sun, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning };
 
 function getMadridDateStr(d = new Date()) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(d);
@@ -44,6 +50,21 @@ function formatDateLong(dateStr) {
 
 export default function CampOrganizer() {
   const [state, setState] = useState(null); // 'loading' | 'stale' | 'empty' | { day, events, session }
+  const [liveWeather, setLiveWeather] = useState(null); // { tempC, feelsLike, humidity, windKmh, code } | null | 'error'
+
+  // Clima en tiempo real (Open-Meteo) — independiente del cache diario de
+  // CampOrganizer, que solo se sincroniza una vez por día.
+  useEffect(() => {
+    let cancelled = false;
+    function load() {
+      fetchCurrentWeather(getCurrentLocation())
+        .then((w) => { if (!cancelled) setLiveWeather(w); })
+        .catch(() => { if (!cancelled) setLiveWeather('error'); });
+    }
+    load();
+    const interval = setInterval(load, 10 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
 
   useEffect(() => {
     getCampScheduleToday().then(({ data, error }) => {
@@ -98,7 +119,6 @@ export default function CampOrganizer() {
   }
 
   const { day, events, session } = state;
-  const weather = day?.weather;
   const sessionStatus = SESSION_STATUS_LABELS[session?.status] || session?.status;
 
   return (
@@ -125,34 +145,37 @@ export default function CampOrganizer() {
         </div>
       </div>
 
-      {/* Weather */}
-      {weather && (
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>
-            <Cloud size={16} style={{ color: 'var(--accent)' }} />
-            Clima · {day?.title || 'Hoy'}
-          </h2>
-          <div style={styles.weatherCard}>
-            <img
-              src={`https://my.camporganizer.app/icons/weather/${weather.icon}.svg`}
-              alt={weather.condition || 'clima'}
-              width={56}
-              height={56}
-              style={{ flexShrink: 0 }}
-            />
-            <div style={styles.weatherMain}>
-              <p style={styles.weatherTemp}>{Math.round(weather.temp_day)}°C</p>
-              <p style={styles.weatherDesc}>{weather.description || weather.condition || weather.summary}</p>
-            </div>
-            <div style={styles.weatherDetails}>
-              <span>Mín {Math.round(weather.temp_min)}° · Máx {Math.round(weather.temp_max)}°</span>
-              <span>Humedad {weather.humidity}%</span>
-              {weather.wind_speed != null && <span>Viento {Math.round(weather.wind_speed)} km/h</span>}
-              {weather.uvi != null && <span>UV {weather.uvi}</span>}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Weather (tiempo real, no el cache diario) */}
+      <div style={styles.section}>
+        <h2 style={styles.sectionTitle}>
+          <Cloud size={16} style={{ color: 'var(--accent)' }} />
+          Clima ahora · {getCurrentLocation()}
+        </h2>
+        {liveWeather === null ? (
+          <div style={styles.empty}>Cargando clima…</div>
+        ) : liveWeather === 'error' ? (
+          <div style={styles.empty}>No se pudo cargar el clima en este momento</div>
+        ) : (
+          (() => {
+            const info = getWeatherInfo(liveWeather.code);
+            const Icon = WEATHER_ICONS[info.icon] || Cloud;
+            return (
+              <div style={styles.weatherCard}>
+                <Icon size={48} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                <div style={styles.weatherMain}>
+                  <p style={styles.weatherTemp}>{Math.round(liveWeather.tempC)}°C</p>
+                  <p style={styles.weatherDesc}>{info.label}</p>
+                </div>
+                <div style={styles.weatherDetails}>
+                  <span>Sensación {Math.round(liveWeather.feelsLike)}°</span>
+                  <span>Humedad {liveWeather.humidity}%</span>
+                  <span>Viento {Math.round(liveWeather.windKmh)} km/h</span>
+                </div>
+              </div>
+            );
+          })()
+        )}
+      </div>
 
       {/* Day info */}
       {day && (
